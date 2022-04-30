@@ -2,11 +2,14 @@
 #include <array>
 #include <chrono>
 #include <deque>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <random>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <boost/hana/functional/fix.hpp>
@@ -26,6 +29,7 @@ using boost::adaptors::map_keys;
 using boost::adaptors::reversed;
 using boost::hana::fix;
 using boost::range::count;
+using boost::range::find;
 using boost::range::lower_bound;
 using boost::range::max_element;
 using boost::range::min_element;
@@ -43,6 +47,7 @@ using usize = size_t;
 [[maybe_unused]] constexpr i32 inf = INT_MAX / 2;
 [[maybe_unused]] constexpr i32 inf32 = INT_MAX / 2;
 [[maybe_unused]] constexpr i64 inf64 = 1LL << 60;
+[[maybe_unused]] constexpr f64 m_pi = 3.14159265358979323;
 #define WHOLE(x) (x).begin(), (x).end()
 #define rep(i, n) for (int i = 0; i < (int)(n); i++)
 #define rep3(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
@@ -80,13 +85,89 @@ constexpr u64 powi(const i64 base, const u64 exp, const u32 mod) noexcept
         (y & 1) && (ans = ans * x % mod), (x = x * x % mod), (y >>= 1);
     return ans;
 }
-constexpr u32 bit_length(i64 x) noexcept
+constexpr u32 bit_width(i64 x) noexcept
 {
+    // https://qiita.com/carnage/items/d1fd54207b45e8150175
+    // https://naoyat.hatenablog.jp/entry/2014/05/12/143650
+#if (defined(__clang__) || defined(__GNUC__))
+    return (x == 0) ? 0 : (u32)sizeof(i64) * 8 - __builtin_clzll((x < 0) ? -x : x);
+#else
     x = (x < 0) ? -x : x;
     u32 ans = 0;
     for (; x != 0; ++ans)
         x >>= 1;
     return ans;
+#endif
+}
+constexpr u32 bit_width(i32 x) noexcept
+{
+#if (defined(__clang__) || defined(__GNUC__))
+    return (x == 0) ? 0 : (u32)sizeof(i32) * 8 - __builtin_clz((x < 0) ? -x : x);
+#else
+    return bit_length((i64)x);
+#endif
+}
+constexpr u32 popcount(i64 x) noexcept
+{
+    // https://naoyat.hatenablog.jp/entry/2014/05/12/143650
+    // https://nixeneko.hatenablog.com/entry/2018/03/04/000000
+#if (defined(__clang__) || defined(__GNUC__))
+    return __builtin_popcountll(x);
+#else
+    x = (x & 0x5555555555555555) + ((x >> 1) & 0x5555555555555555);
+    x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333);
+    x = (x & 0x0F0F0F0F0F0F0F0F) + ((x >> 4) & 0x0F0F0F0F0F0F0F0F);
+    x = (x & 0x00FF00FF00FF00FF) + ((x >> 8) & 0x00FF00FF00FF00FF);
+    x = (x & 0x0000FFFF0000FFFF) + ((x >> 16) & 0x0000FFFF0000FFFF);
+    x = (x & 0x00000000FFFFFFFF) + ((x >> 32) & 0x00000000FFFFFFFF);
+    return x
+#endif
+}
+constexpr u32 popcount(i32 x) noexcept
+{
+#if (defined(__clang__) || defined(__GNUC__))
+    return __builtin_popcount(x);
+#else
+    x = (x & 0x55555555) + ((x >> 1) & 0x55555555);
+    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+    x = (x & 0x0F0F0F0F) + ((x >> 4) & 0x0F0F0F0F);
+    x = (x & 0x00FF00FF) + ((x >> 8) & 0x00FF00FF);
+    x = (x & 0x0000FFFF) + ((x >> 16) & 0x0000FFFF);
+    return x
+#endif
+}
+constexpr u32 countr_zero(i64 x) noexcept
+{
+#if (defined(__clang__) || defined(__GNUC__))
+    return (x == 0) ? (u32)sizeof(i64) * 8 : __builtin_ctzll(x);
+#else
+    return (x == 0) ? (u32)sizeof(i64) * 8 : bit_width(x & (-x)) - 1;
+#endif
+}
+constexpr u32 countr_zero(i32 x) noexcept
+{
+#if (defined(__clang__) || defined(__GNUC__))
+    return (x == 0) ? (u32)sizeof(i32) * 8 : __builtin_ctz(x);
+#else
+    return (x == 0) ? (u32)sizeof(i32) * 8 : bit_width(x & (-x)) - 1;
+#endif
+}
+template <class T>
+void input(vector<T> &vec)
+{
+    rep(i, vec.size())
+    {
+        T v;
+        cin >> v;
+        vec.at(i) = v;
+    }
+}
+template <class T>
+void dump(const T &range)
+{
+    for (const auto &v : range)
+        cout << v << ' ';
+    cout << endl;
 }
 template <class K, class V, class F>
 constexpr boost::iterator_range<typename vector<K>::iterator> equal_range(vector<K> &vec, V &value, F &&key)
@@ -104,4 +185,5 @@ int main()
 {
     // ios_base::sync_with_stdio(false);
     // cin.tie(nullptr);
+    cout << std::setprecision(16);
 }
