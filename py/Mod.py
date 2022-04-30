@@ -1,13 +1,17 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/Mod.py
 class Mod:
     """
-    v1.0 @cexen
+    v1.1 @cexen
     Expected to be faster than Mint.
     >>> mod = Mod(998244353)
-    >>> mod.fact(10)  # factorial
+    >>> mod.fact(10)  # factorial (auto-cached)
     3628800
-    >>> mod.ifact(2)  # inverse of factorial
+    >>> mod.ifact(2)  # inverse of factorial (auto-cached)
     499122177
+
+    You may make cache manually (O(n)):
+    >>> mod._cache_ifacts(10000)
+
     >>> mod.comb(4, 2)  # combination; [x**2](1+x)**4
     6
     >>> mod.comb(0, 0)
@@ -37,6 +41,7 @@ class Mod:
         return self.mod
 
     def _cache_facts(self, n: int) -> None:
+        """O(Δn)."""
         if n < len(self.facts):
             return
         mod = self.mod
@@ -47,15 +52,17 @@ class Mod:
             facts[i] = facts[i - 1] * i % mod
 
     def _cache_ifacts(self, n: int) -> None:
+        """O(Δn + log n)."""
         if n < len(self.ifacts):
             return
         self._cache_facts(n)
-        facts = self.facts
+        mod = self.mod
         ifacts = self.ifacts
         i0 = len(ifacts)
         ifacts.extend([1] * (n + 1 - i0))
-        for i in range(i0, n + 1):
-            ifacts[i] = self.inv(facts[i])
+        ifacts[n] = self.inv(self.facts[n])
+        for i in reversed(range(i0, n)):
+            ifacts[i] = ifacts[i + 1] * (i + 1) % mod
 
     def fact(self, v: int) -> int:
         self._cache_facts(v)
@@ -81,7 +88,7 @@ class Mod:
         return self.comb(n + r - 1, r)
 
     def inv(self, v: int) -> int:
-        """mod must be a prime!"""
+        """O(log v). mod must be a prime!"""
         assert self.is_prime
         return pow(v, self.mod - 2, self.mod)
 
