@@ -10,6 +10,9 @@ Use the information in this repository at your own risk.
 
 Target: Clang++17 on Windows.
 
+### Additional info
+[cpp/README.md](cpp/README.md)
+
 ## py
 
 Target: PyPy3.6.
