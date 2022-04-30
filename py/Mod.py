@@ -1,7 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/Mod.py
 class Mod:
     """
-    v1.1 @cexen
+    v1.2 @cexen
     Expected to be faster than Mint.
     >>> mod = Mod(998244353)
     >>> mod.fact(10)  # factorial (auto-cached)
@@ -99,7 +99,7 @@ class Mod:
         return (a - b) % self.mod
 
     def mul(self, a: int, b: int) -> int:
-        return (a - b) % self.mod
+        return (a * b) % self.mod
 
     def pow(self, a: int, b: int) -> int:
         return pow(a, b, self.mod)
