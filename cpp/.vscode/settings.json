@@ -34,7 +34,10 @@
 		"valarray": "cpp",
 		"xutility": "cpp",
 		"hash_map": "cpp",
-		"unordered_map": "cpp"
+		"unordered_map": "cpp",
+		"modint": "cpp",
+		"set": "cpp",
+		"cassert": "cpp"
 	},
 	"files.exclude": {
 		"**/.git": true,

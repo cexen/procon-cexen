@@ -7,6 +7,7 @@
 #include <map>
 #include <random>
 #include <set>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -16,6 +17,8 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/algorithm_ext.hpp>
+#include <boost/range/irange.hpp>
+#include <boost/range/numeric.hpp>
 #include <atcoder/all>
 
 using namespace std;
@@ -23,12 +26,16 @@ using namespace std;
 // using namespace boost::algorithm;
 // using namespace boost::range;
 using namespace atcoder;
+using boost::accumulate;
+using boost::irange;
 using boost::make_iterator_range;
 using boost::adaptors::indexed;
 using boost::adaptors::map_keys;
 using boost::adaptors::reversed;
+using boost::adaptors::transformed;
 using boost::hana::fix;
 using boost::range::count;
+using boost::range::fill;
 using boost::range::find;
 using boost::range::lower_bound;
 using boost::range::max_element;
@@ -51,6 +58,7 @@ using usize = size_t;
 #define WHOLE(x) (x).begin(), (x).end()
 #define rep(i, n) for (int i = 0; i < (int)(n); i++)
 #define rep3(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
+#define rep4(i, a, b, s) for (int i = (int)(a); i < (int)(b); i += s)
 // #define _rep2(i, n) for (int i = 0; i < (int)(n); i++)
 // #define _rep3(i, a, b) for (int i = (int)(a); i < (int)(b); i++)
 // #define _overload3(_1, _2, _3, name, ...) name
@@ -70,6 +78,12 @@ template <class T>
 void dedup(vector<T> &v)
 {
     v.erase(unique(v.begin(), v.end()), v.end());
+}
+template <class T>
+constexpr T gcd(const initializer_list<T> &t)
+{
+    return accumulate(t.begin(), t.end(), T(0), [](const T m, const T n)
+                      { return gcd(m, n); });
 }
 constexpr i64 powi(const i64 base, const u64 exp) noexcept
 {
@@ -153,14 +167,23 @@ constexpr u32 countr_zero(i32 x) noexcept
 #endif
 }
 template <class T>
+T input()
+{
+    T v;
+    cin >> v;
+    return v;
+}
+template <class T>
 void input(vector<T> &vec)
 {
-    rep(i, vec.size())
-    {
-        T v;
-        cin >> v;
-        vec.at(i) = v;
-    }
+    rep(i, vec.size()) vec.at(i) = input<T>();
+}
+template <class T>
+vector<T> input(const usize n)
+{
+    vector<T> vec(n);
+    input(vec);
+    return vec;
 }
 template <class T>
 void dump(const T &range)
@@ -169,6 +192,22 @@ void dump(const T &range)
         cout << v << ' ';
     cout << endl;
 }
+template <i32 T>
+void dump(const vector<static_modint<T>> &range)
+{
+    for (const auto &v : range)
+        cout << v.val() << ' ';
+    cout << endl;
+}
+template <i32 T>
+void dump(const vector<dynamic_modint<T>> &range)
+{
+    for (const auto &v : range)
+        cout << v.val() << ' ';
+    cout << endl;
+}
+template <class S, S e>
+constexpr S eigen() { return e; }
 template <class K, class V, class F>
 constexpr boost::iterator_range<typename vector<K>::iterator> equal_range(vector<K> &vec, V &value, F &&key)
 {
