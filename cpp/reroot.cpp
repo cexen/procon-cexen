@@ -7,7 +7,7 @@ using namespace std;
 using boost::hana::fix;
 
 /**
- * @brief v1.2 @cexen
+ * @brief v1.2 cexen.
  */
 struct tree
 {
@@ -23,7 +23,7 @@ private:
 
 public:
     tree() : tree(0) {}
-    explicit tree(size_t n) : n(n), _adjs(n), _parents(n), _childrens(n) {}
+    explicit tree(const size_t n) : n(n), _adjs(n), _parents(n), _childrens(n) {}
 
     /**
      * Specify e (edge index) if you need it when add_e.
