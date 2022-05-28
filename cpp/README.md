@@ -14,6 +14,6 @@ Open a Developer PowerShell of MSVC.
 ```pwsh
 cd ~/Downloads/boost_1_72_0
 ./bootstrap
-$threads = 1 + (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors  # OR SPECIFY WHAT YOU LIKE
-./b2 stage toolset=clang-win toolset=clang-win link=static threading=single variant=release runtime-link=static -j"$threads"
+$num_threads = 1 + (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors  # OR SPECIFY WHAT YOU LIKE
+./b2 stage toolset=clang-win toolset=clang-win link=static threading=single variant=release runtime-link=static -j"$num_threads"
 ```
