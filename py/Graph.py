@@ -26,17 +26,17 @@ C = TypeVar("C")
 
 
 class Graph(Generic[C], Sequence[int]):
-    """v1.12 @cexen"""
+    """v1.14 @cexen"""
 
-    from typing import List, FrozenSet, Union, overload
+    from typing import Union, Tuple, List, FrozenSet, overload
 
     def __init__(self, n: int, _0: C):
         from typing import List, Tuple, FrozenSet, Optional
 
         self._n = n
         self._0 = _0  # will be used for initial cost values
-        self._adjs: List[List[Tuple[int, C]]] = [[] for _ in range(n)]
-        self._revs: List[List[Tuple[int, C]]] = [[] for _ in range(n)]
+        self._adjs: List[List[Tuple[int, C, int]]] = [[] for _ in range(n)]
+        self._revs: List[List[Tuple[int, C, int]]] = [[] for _ in range(n)]
         self._idxs = list(range(n))
         self._is_sorted = True
         self._sccs: Optional[List[FrozenSet[int]]] = None
@@ -60,14 +60,17 @@ class Graph(Generic[C], Sequence[int]):
         if not self._n > 0:
             raise RuntimeError("n must be > 0.")
 
-    def connect(self, i: int, j: int, cost: C) -> None:
-        """O(1). i -> j. DIRECTED."""
+    def connect(self, i: int, j: int, cost: C, edgeidx: int = -1) -> None:
+        """
+        O(1). i -> j. DIRECTED.
+        Specify edgeidx if you need it when rerooting.
+        """
         if not 0 <= i < self._n:
             raise ValueError
         if not 0 <= j < self._n:
             raise ValueError
-        self._adjs[i].append((j, cost))
-        self._revs[j].append((i, cost))
+        self._adjs[i].append((j, cost, edgeidx))
+        self._revs[j].append((i, cost, edgeidx))
         self._is_sorted = False
         self._sccs = None
         self._locs_in_sccs = None
@@ -98,7 +101,7 @@ class Graph(Generic[C], Sequence[int]):
                     continue
                 visited[i] = True
                 q.append(~i)
-                for j, _ in self._adjs[i]:
+                for j, *_ in self._adjs[i]:
                     if not visited[j]:
                         # Note: it is incorrect to do here visited[j] = True
                         q.append(j)
@@ -106,44 +109,52 @@ class Graph(Generic[C], Sequence[int]):
         self._idxs = idxs[::-1]
         self._is_sorted = True
 
-    def _memorize_locs_in_sccs(self, sccs: List[FrozenSet[int]]) -> None:
-        locs_in_sccs = [-1] * self._n
-        for idx, scc in enumerate(sccs):
-            for i in scc:
-                locs_in_sccs[i] = idx
-        self._locs_in_sccs = locs_in_sccs
-
-    def find_sccs(self) -> List[FrozenSet[int]]:
+    def find_sccs(
+        self,
+        require_sccadjs: bool = False,
+    ) -> Tuple[
+        List[FrozenSet[int]],
+        List[List[Tuple[int, int]]],
+        List[List[Tuple[int, int]]],
+    ]:
         """
         O(n + m). m: num of connections.
         Return: A topologically sorted list of SCCs.
         """
-        from typing import List, FrozenSet
+        from typing import Tuple, List, FrozenSet
 
         if not self._is_sorted:
             self.sort()
 
         sccs: List[FrozenSet[int]] = []
-        visited = [False] * self._n
+        locs_in_sccs = [-1] * self._n
+        sccadjs: List[List[Tuple[int, int]]] = [[] for _ in range(self._n)]
+        sccrevs: List[List[Tuple[int, int]]] = [[] for _ in range(self._n)]
         for idx in self._idxs:
-            if visited[idx]:
+            if locs_in_sccs[idx] != -1:
                 continue
             scc: List[int] = []
             q: List[int] = []
-            visited[idx] = True
+            si = len(sccs)
+            locs_in_sccs[idx] = si
             q.append(idx)
             while q:
                 i = q.pop()
                 scc.append(i)
-                for j, _ in self._revs[i]:
-                    if not visited[j]:
-                        visited[j] = True
-                        q.append(j)
+                for j, _, e in self._revs[i]:
+                    if locs_in_sccs[j] != -1:
+                        if require_sccadjs:
+                            sj = locs_in_sccs[j]
+                            sccadjs[sj].append((si, e))
+                            sccrevs[si].append((sj, e))
+                        continue
+                    locs_in_sccs[j] = si
+                    q.append(j)
             sccs.append(frozenset(scc))
 
         self._sccs = sccs
-        self._memorize_locs_in_sccs(sccs)
-        return sccs[:]
+        self._locs_in_sccs = locs_in_sccs
+        return sccs[:], sccadjs[: len(sccs)], sccrevs[: len(sccs)]
 
     def is_dag(self) -> bool:
         """
@@ -154,7 +165,7 @@ class Graph(Generic[C], Sequence[int]):
             raise RuntimeError("Do find_sccs() first.")
         if len(self._sccs) < self._n:
             return False
-        if any(i == j for i, adj in enumerate(self._adjs) for j, _ in adj):
+        if any(i == j for i, adj in enumerate(self._adjs) for j, _, _ in adj):
             return False  # has self loop
         return True
 
@@ -176,12 +187,12 @@ class GraphInt(Graph[int]):
     def __init__(self, n: int):
         super().__init__(n, _0=0)
 
-    def connect(self, i: int, j: int, cost: int = 1) -> None:
-        super().connect(i, j, cost)
+    def connect(self, i: int, j: int, cost: int = 1, edgeidx: int = -1) -> None:
+        super().connect(i, j, cost, edgeidx)
 
 
 class Tree(Graph[C]):
-    """v1.3 @cexen"""
+    """v1.5 @cexen"""
 
     from typing import Optional, List, Tuple
 
@@ -237,7 +248,7 @@ class Tree(Graph[C]):
             depths[i] = d
             weighted_depths[i] = wd
             parents[0][i] = parent
-            for j, c in self._adjs[i]:
+            for j, c, _ in self._adjs[i]:
                 if parent == j:
                     continue
                 q.append((j, d + 1, wd + c, i))  # type: ignore
@@ -317,5 +328,5 @@ class TreeInt(Tree[int]):
     def __init__(self, n: int, root: Optional[int] = None):
         super().__init__(n, _0=0, root=root)
 
-    def connect(self, i: int, j: int, cost: int = 1) -> None:
-        super().connect(i, j, cost)
+    def connect(self, i: int, j: int, cost: int = 1, edgeidx: int = -1) -> None:
+        super().connect(i, j, cost, edgeidx)
