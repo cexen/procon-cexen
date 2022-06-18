@@ -7,7 +7,7 @@ using namespace std;
 using boost::hana::fix;
 
 /**
- * @brief v1.2 cexen.
+ * @brief v1.3 cexen.
  */
 struct tree
 {
@@ -144,9 +144,9 @@ vector<V> collect_for_all(tree tree, FEV add_e, FEEE merge, FVE add_v, FE ee, co
     vector<V> ans0 = collect_for_root<E, V>(tree, add_e, merge, add_v, ee, root);
     vector<V> ans(tree.n);
     const auto visit = fix(
-        [&tree, &ans0, &ans, &add_e, &merge, &add_v, &ee](const auto &&self, const size_t i, const V &ans_parent) -> void
+        [&tree, &ans0, &ans, &add_e, &merge, &add_v, &ee, &root](const auto &&self, const size_t i, const V &ans_parent) -> void
         {
-            auto [idxs, parents, childrens] = tree.sort();
+            auto [idxs, parents, childrens] = tree.sort(root);
             const auto &adj = tree.adjs().at(i);
             const auto &parent = parents.at(i);
             vector<E> edges(adj.size());
