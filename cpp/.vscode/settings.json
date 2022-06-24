@@ -37,7 +37,9 @@
 		"unordered_map": "cpp",
 		"modint": "cpp",
 		"set": "cpp",
-		"cassert": "cpp"
+		"cassert": "cpp",
+		"stdexcept": "cpp",
+		"xstddef": "cpp"
 	},
 	"files.exclude": {
 		"**/.git": true,
