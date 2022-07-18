@@ -452,8 +452,8 @@ class WaveletMatrix(Sequence[int]):
         i: int,
         j: int,
         x: int = 0,
-        y: int = None,
-        k: int = None,
+        y: Optional[int] = None,
+        k: Optional[int] = None,
         reverse: bool = False,
     ) -> List[Tuple[int, int]]:
         """
@@ -472,7 +472,8 @@ class WaveletMatrix(Sequence[int]):
 
         if k == 0:
             return []
-        q = [(0, 0, i, j, False, False)]
+        TypeQ = List[Tuple[int, int, int, int, bool, bool]]
+        q: TypeQ = [(0, 0, i, j, False, False)]
         ans: List[Tuple[int, int]] = []
         while q:
             v, ib, i, j, gtx, lty = q.pop()
@@ -489,7 +490,7 @@ class WaveletMatrix(Sequence[int]):
             r0, r1 = bv.rankall(j)
             x_is_0 = (x >> nib) & 1 == 0
             y_is_1 = (y >> nib) & 1 == 1
-            nq = []
+            nq: TypeQ = []
             if l1 < r1 and (lty or y_is_1):
                 l1 += num0
                 r1 += num0
@@ -553,7 +554,8 @@ class WaveletMatrix(Sequence[int]):
         assert 0 <= i1 <= j1 <= len(self)
         assert 0 <= i2 <= j2 <= len(self)
 
-        q = [(0, 0, i1, j1, i2, j2)]
+        TypeQ = List[Tuple[int, int, int, int, int, int]]
+        q: TypeQ = [(0, 0, i1, j1, i2, j2)]
         ans: List[Tuple[int, int, int]] = []
         while q:
             v, ib, i1, j1, i2, j2 = q.pop()
