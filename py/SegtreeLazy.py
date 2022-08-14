@@ -266,6 +266,12 @@ class SegtreeLazyInt(SegtreeLazy[int, int]):
         return cls(iterable, fvv=min, fvxn=lambda v, x, n: x, fxx=lambda x, y: y, ev=ev)
 
     @classmethod
+    def max_add(cls, iterable: Iterable[int], ev: int = -(10**9)):
+        return cls(
+            iterable, fvv=max, fvxn=lambda v, x, n: v + x, fxx=lambda x, y: x + y, ev=ev
+        )
+
+    @classmethod
     def min_add(cls, iterable: Iterable[int], ev: int = 10**9):
         return cls(
             iterable, fvv=min, fvxn=lambda v, x, n: v + x, fxx=lambda x, y: x + y, ev=ev
