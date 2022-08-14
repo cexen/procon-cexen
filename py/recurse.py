@@ -1,6 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/recurse.py
 import sys
 
+input = sys.stdin.readline
 sys.setrecursionlimit(10**9)
 
 try:
