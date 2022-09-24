@@ -1,46 +1,57 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/UnionFind.py
+
+
 class UnionFind:
+    """
+    v1.1 @cexen
+    """
+
     def __init__(self, n: int):
         self.size = n
         self.data = [-1] * n
         self.sizes = [1] * n
-        self.weights = [0] * n
+        # self.weights = [0] * n
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.size
 
-    def root(self, i: int):
-        """0 <= i < n"""
-        if self.data[i] < 0:
+    def root(self, i: int) -> int:
+        """O(α(n)). 0 <= i < n."""
+        data = self.data
+        p = data[i]
+        if p < 0:
             return i
-        self.data[i] = self.root(self.data[i])
-        return self.data[i]
+        data[i] = p = self.root(p)
+        return p
 
-    def connected(self, i: int, j: int):
+    def connected(self, i: int, j: int) -> bool:
         return self.root(i) == self.root(j)
 
-    def groupsize(self, i: int):
+    def groupsize(self, i: int) -> int:
         return self.sizes[self.root(i)]
 
     def roots(self):
-        """O(n)"""
+        """O(n)."""
         return [i for i, v in enumerate(self.data) if v < 0]
 
-    def unite(self, i: int, j: int):
+    def unite(self, i: int, j: int) -> None:
         i = self.root(i)
         j = self.root(j)
         if i == j:
             return
-        if (-self.data[i]) < (-self.data[j]):
-            self.data[i] = j
-            self.sizes[j] += self.sizes[i]
-            self.weights[j] += self.weights[i]
-        elif (-self.data[i]) > (-self.data[j]):
-            self.data[j] = i
-            self.sizes[i] += self.sizes[j]
-            self.weights[i] += self.weights[j]
+        data = self.data
+        sizes = self.sizes
+        # weights = self.weights
+        if (-data[i]) < (-data[j]):
+            data[i] = j
+            sizes[j] += sizes[i]
+            # weights[j] += weights[i]
+        elif (-data[i]) > (-data[j]):
+            data[j] = i
+            sizes[i] += sizes[j]
+            # weights[i] += weights[j]
         else:
-            self.data[i] += -1
-            self.data[j] = i
-            self.sizes[i] += self.sizes[j]
-            self.weights[i] += self.weights[j]
+            data[i] += -1
+            data[j] = i
+            sizes[i] += sizes[j]
+            # weights[i] += weights[j]
