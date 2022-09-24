@@ -1,3 +1,4 @@
+// https://github.com/cexen/procon-cexen/blob/main/cpp/numutils.cpp
 #include <cassert>
 #include <map>
 #include <iostream>
@@ -73,7 +74,7 @@ vector<vector<int32_t>> list_divisors_eratosthenes(int32_t n)
 
 vector<int64_t> list_divisors(const map<int32_t, int32_t> &factors)
 {
-    vector<int64_t> q(1, 1);
+    vector<int64_t> q{1};
     for (const auto &[p, num] : factors)
     {
         vector<int64_t> nq;
@@ -116,6 +117,8 @@ vector<int64_t> list_divisors(int32_t x, const vector<int32_t> &factors)
     }
     return q;
 }
+
+// --------------------
 
 int main()
 {

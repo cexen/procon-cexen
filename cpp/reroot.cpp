@@ -1,3 +1,4 @@
+// https://github.com/cexen/procon-cexen/blob/main/cpp/reroot.cpp
 #include <cassert>
 #include <iostream>
 #include <vector>
