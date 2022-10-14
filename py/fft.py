@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/FFT.py
+# https://github.com/cexen/procon-cexen/blob/main/py/fft.py
 class FFTNaive:
     """
     @cexen v1.6

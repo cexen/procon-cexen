@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/sequtil.py
+# https://github.com/cexen/procon-cexen/blob/main/py/util_seq.py
 from typing import Sequence, List, Tuple, TypeVar
 
 T_ = TypeVar("T_")

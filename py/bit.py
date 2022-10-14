@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/BIT.py
+# https://github.com/cexen/procon-cexen/blob/main/py/bit.py
 import operator
 from typing import TypeVar, Generic
 

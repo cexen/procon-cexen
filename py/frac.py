@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/Frac.py
+# https://github.com/cexen/procon-cexen/blob/main/py/frac.py
 from numbers import Number
 
 

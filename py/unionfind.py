@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/UnionFind.py
+# https://github.com/cexen/procon-cexen/blob/main/py/unionfind.py
 
 
 class UnionFind:

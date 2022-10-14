@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/LazySequence.py
+# https://github.com/cexen/procon-cexen/blob/main/py/lazy_sequence.py
 from collections.abc import Sequence
 
 

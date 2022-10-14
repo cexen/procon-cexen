@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/Graph.py
+# https://github.com/cexen/procon-cexen/blob/main/py/graph.py
 from typing import TypeVar, Generic, Sequence
 
 

@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/numutil.py
+# https://github.com/cexen/procon-cexen/blob/main/py/util_num.py
 def popcount(n: int) -> int:
     """
     Returns the number of 1 bits.

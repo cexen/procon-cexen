@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/HeapQueue.py
+# https://github.com/cexen/procon-cexen/blob/main/py/heapqueue.py
 from typing import TypeVar, Generic
 import heapq
 

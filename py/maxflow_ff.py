@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/MaxFlowFF.py
+# https://github.com/cexen/procon-cexen/blob/main/py/maxflow_ff.py
 class MaxFlowFF:
     """
     @cexen v0.2

@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/Mint.py
+# https://github.com/cexen/procon-cexen/blob/main/py/mint.py
 from numbers import Number
 
 

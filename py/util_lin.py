@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/linutil.py
+# https://github.com/cexen/procon-cexen/blob/main/py/util_lin.py
 from typing import List
 
 

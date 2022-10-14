@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/WaveletMatrix.py
+# https://github.com/cexen/procon-cexen/blob/main/py/wavelet.py
 def popcount(n: int) -> int:
     """
     Returns the number of 1 bits.

@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/SegtreePrimal.py
+# https://github.com/cexen/procon-cexen/blob/main/py/segtree_primal.py
 import operator
 from typing import TypeVar, Sequence
 

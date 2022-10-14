@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/Mod.py
+# https://github.com/cexen/procon-cexen/blob/main/py/mod.py
 class Mod:
     """
     v1.2 @cexen

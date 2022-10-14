@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/TreeSimple.py
+# https://github.com/cexen/procon-cexen/blob/main/py/tree_simple.py
 class Tree:
     """v1.1 @cexen"""
 

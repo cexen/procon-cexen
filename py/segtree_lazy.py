@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/SegtreeLazy.py
+# https://github.com/cexen/procon-cexen/blob/main/py/segtree_lazy.py
 import operator
 from typing import TypeVar, Generic, Iterable, List
 

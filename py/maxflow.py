@@ -1,4 +1,4 @@
-# https://github.com/cexen/procon-cexen/blob/main/py/MaxFlow.py
+# https://github.com/cexen/procon-cexen/blob/main/py/maxflow.py
 class MaxFlow:
     """
     @cexen v0.2
