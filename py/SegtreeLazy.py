@@ -283,6 +283,25 @@ class SegtreeLazyInt(SegtreeLazy[int, int]):
         )
 
 
+############
+# template #
+############
+# V = int
+# X = int
+# def fvv(u: V, v: V) -> V:
+#     raise NotImplementedError
+# def fvxn(v: V, x: X, n: int) -> V:
+#     raise NotImplementedError
+# def fxx(x: X, y: X) -> X:
+#     raise NotImplementedError
+# ev = 0
+# ex = 0
+# seg = SegtreeLazy[V, X]([], fvv=fvv, fvxn=fvxn, fxx=fxx, ev=ev, ex=ex)
+
+
+# --------------------
+
+
 def solve_yosupojudge_setitem_grasp():
     """
     Point Set Range Composite
@@ -389,19 +408,3 @@ def solve_yosupojudge_operate_grasp():
             raise RuntimeError
     for a in ans:
         print(a)
-
-
-############
-# template #
-############
-# V = int
-# X = int
-# def fvv(u: V, v: V) -> V:
-#     raise NotImplementedError
-# def fvxn(v: V, x: X, n: int) -> V:
-#     raise NotImplementedError
-# def fxx(x: X, y: X) -> X:
-#     raise NotImplementedError
-# ev = 0
-# ex = 0
-# seg = SegtreeLazy[V, X]([], fvv=fvv, fvxn=fvxn, fxx=fxx, ev=ev, ex=ex)

@@ -2,41 +2,41 @@
 from typing import TypeVar, Generic, Sequence
 
 
-C = TypeVar("C")
+C_ = TypeVar("C_")
 
 # >= 3.8
 
-# C = TypeVar("C", bound="Cost")
+# C_ = TypeVar("C_", bound="Cost")
 
 # from typing import Protocol, runtime_checkable
 # from abc import abstractmethod
 # @runtime_checkable
 # class Cost(Protocol):
 #     @abstractmethod
-#     def __add__(self: C, other: C) -> C:
+#     def __add__(self: C_, other: C_) -> C_:
 #         ...
 
 #     @abstractmethod
-#     def __sub__(self: C, other: C) -> C:
+#     def __sub__(self: C_, other: C_) -> C_:
 #         ...
 
 #     @abstractmethod
-#     def __lt__(self: C, other: C) -> bool:
+#     def __lt__(self: C_, other: C_) -> bool:
 #         ...
 
 
-class Graph(Generic[C], Sequence[int]):
+class Graph(Generic[C_], Sequence[int]):
     """v1.14 @cexen"""
 
     from typing import Union, Tuple, List, FrozenSet, overload
 
-    def __init__(self, n: int, _0: C):
+    def __init__(self, n: int, _0: C_):
         from typing import List, Tuple, FrozenSet, Optional
 
         self._n = n
         self._0 = _0  # will be used for initial cost values
-        self._adjs: List[List[Tuple[int, C, int]]] = [[] for _ in range(n)]
-        self._revs: List[List[Tuple[int, C, int]]] = [[] for _ in range(n)]
+        self._adjs: List[List[Tuple[int, C_, int]]] = [[] for _ in range(n)]
+        self._revs: List[List[Tuple[int, C_, int]]] = [[] for _ in range(n)]
         self._idxs = list(range(n))
         self._is_sorted = True
         self._sccs: Optional[List[FrozenSet[int]]] = None
@@ -60,7 +60,7 @@ class Graph(Generic[C], Sequence[int]):
         if not self._n > 0:
             raise RuntimeError("n must be > 0.")
 
-    def connect(self, i: int, j: int, cost: C, edgeidx: int = -1) -> None:
+    def connect(self, i: int, j: int, cost: C_, edgeidx: int = -1) -> None:
         """
         O(1). i -> j. DIRECTED.
         Specify edgeidx if you need it when rerooting.
@@ -184,6 +184,17 @@ class Graph(Generic[C], Sequence[int]):
 
 
 class GraphInt(Graph[int]):
+    """
+    >>> g = GraphInt(4)
+    >>> g.connect(1, 0)
+    >>> g.connect(1, 2)
+    >>> g.connect(2, 1)
+    >>> g.connect(3, 2)
+    >>> g.sort()
+    >>> g.find_sccs()
+    ([frozenset({3}), frozenset({1, 2}), frozenset({0})], [[], [], []], [[], [], []])
+    """
+
     def __init__(self, n: int):
         super().__init__(n, _0=0)
 
@@ -191,12 +202,12 @@ class GraphInt(Graph[int]):
         super().connect(i, j, cost, edgeidx)
 
 
-class Tree(Graph[C]):
+class Tree(Graph[C_]):
     """v1.5 @cexen"""
 
     from typing import Optional, List, Tuple
 
-    def __init__(self, n: int, _0: C, root: Optional[int] = None):
+    def __init__(self, n: int, _0: C_, root: Optional[int] = None):
         from typing import Optional, List
 
         super().__init__(n, _0)
@@ -206,7 +217,7 @@ class Tree(Graph[C]):
         self._root = root
         self._maxdepth: Optional[int] = None
         self._depths: Optional[List[int]] = None
-        self._weighted_depths: Optional[List[C]] = None
+        self._weighted_depths: Optional[List[C_]] = None
         self._parents: Optional[List[List[int]]] = None
         self._bitlen_maxdepth: Optional[int] = None
 
@@ -222,10 +233,10 @@ class Tree(Graph[C]):
 
     def locate_all_from_root(
         self, root: Optional[int] = None, save: bool = True
-    ) -> Tuple[int, List[int], List[C], List[List[int]]]:
+    ) -> Tuple[int, List[int], List[C_], List[List[int]]]:
         """
         O(n). Prerequisite: none.
-        Returns: (maxdepth, depths, parents, one_of_deepest).
+        Returns: (maxdepth, depths, weighted_depths, parents).
         """
         from collections import deque
         from typing import Deque, Tuple
@@ -241,7 +252,7 @@ class Tree(Graph[C]):
         depths = [-1] * self._n
         weighted_depths = [self._0] * self._n
         parents = [[-1] * self._n]  # [k of 2^k][i]
-        q: Deque[Tuple[int, int, C, int]] = deque()
+        q: Deque[Tuple[int, int, C_, int]] = deque()
         q.append((root, 0, self._0, -1))
         while len(q):
             i, d, wd, parent = q.popleft()  # BFS
@@ -295,7 +306,7 @@ class Tree(Graph[C]):
                 v = self._parents[k][v]
         return self._parents[0][u]
 
-    def find_dist(self, u: int, v: int) -> C:
+    def find_dist(self, u: int, v: int) -> C_:
         """
         O(log n). Prerequisite: double()
         """
@@ -308,7 +319,7 @@ class Tree(Graph[C]):
             - self._weighted_depths[lca]
         )
 
-    def find_diameter(self, root: int = 0, save: bool = True) -> Tuple[C, int, int]:
+    def find_diameter(self, root: int = 0, save: bool = True) -> Tuple[C_, int, int]:
         """
         MUST BE BIDIRECTIONAL. DOES NOT ACCOUNT FOR COSTS.
         Prerequisite: none
@@ -323,6 +334,25 @@ class Tree(Graph[C]):
 
 
 class TreeInt(Tree[int]):
+    """
+    >>> tree = TreeInt(4)
+    >>> tree.connect(0, 1)
+    >>> tree.connect(1, 0)
+    >>> tree.connect(0, 2)
+    >>> tree.connect(2, 0)
+    >>> tree.connect(2, 3)
+    >>> tree.connect(3, 2)
+    >>> tree.locate_all_from_root(root=0)
+    (2, [0, 1, 1, 2], [0, 1, 1, 2], [[-1, 0, 0, 2]])
+    >>> tree.double()
+    >>> tree.find_lca(2, 3)
+    2
+    >>> tree.find_dist(1, 3)
+    3
+    >>> tree.find_diameter(root=0)  # max(dist(i, j)) == 3 == dist(3, 1)
+    (3, 3, 1)
+    """
+
     from typing import Optional
 
     def __init__(self, n: int, root: Optional[int] = None):

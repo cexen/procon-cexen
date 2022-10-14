@@ -4,6 +4,13 @@ class MaxFlow:
     @cexen v0.2
     Dinic.
     cf. [Dinic 法とその時間計算量 - みさわめも](https://misawa.github.io/others/flow/dinic_time_complexity.html)
+    >>> mf = MaxFlow(4)
+    >>> mf.connect(0, 1, 10)
+    >>> mf.connect(0, 2, 3)
+    >>> mf.connect(1, 3, 10**9)
+    >>> mf.connect(2, 3, 10**9)
+    >>> mf.flow(0, 3)
+    13
     """
 
     def __init__(self, n: int):
@@ -109,6 +116,14 @@ class MaxBiMatch:
     """
     @cexen v0.1
     Maximum bipartite matching based on Dinic
+    >>> mbm = MaxBiMatch(3, 4)
+    >>> mbm.connect(0, 0)
+    >>> mbm.connect(0, 2)
+    >>> mbm.connect(0, 3)
+    >>> mbm.connect(1, 0)
+    >>> mbm.connect(2, 2)
+    >>> mbm.match()
+    [(0, 3), (1, 0), (2, 2)]
     """
 
     from typing import Tuple, List

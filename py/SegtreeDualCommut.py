@@ -145,6 +145,15 @@ class SegtreeDualCommutCompress(SegtreeDualCommut[V, X]):
 
 
 class SegtreeDualCommutInt(SegtreeDualCommut[int, int]):
+    """
+    >>> seg = SegtreeDualCommutInt([0, 1, 2, 3, 4])
+    >>> seg[:]
+    [0, 1, 2, 3, 4]
+    >>> seg.operate(100, 1, 4)
+    >>> seg[:]
+    [0, 101, 102, 103, 4]
+    """
+
     from typing import Iterable, Callable
 
     def __init__(

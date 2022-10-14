@@ -37,7 +37,11 @@ def popcount2(n: int) -> int:
 
 
 def generate_primes(n: int):
-    """Returns list of primes <= n."""
+    """
+    Returns list of primes <= n.
+    >>> generate_primes(11)
+    [2, 3, 5, 7, 11]
+    """
     from math import sqrt
 
     isprime = [True] * n
@@ -52,7 +56,11 @@ def generate_primes(n: int):
 
 
 def fact_in_primes(n: int, primes: list):
-    """primes must be sorted."""
+    """
+    primes must be sorted.
+    >>> fact_in_primes(60, generate_primes(60))
+    Counter({2: 2, 3: 1, 5: 1})
+    """
     # assert 1 not in primes
     from typing import Counter
 
@@ -68,10 +76,15 @@ def fact_in_primes(n: int, primes: list):
 
 
 def fact(n: int):
-    """Returned prime list will be sorted."""
+    """
+    Returned prime list will be sorted.
+    >>> fact(60)
+    [2, 2, 3, 5]
+    """
     from math import sqrt
+    from typing import List
 
-    primes = []
+    primes: List[int] = []
     for p in range(2, 2 + int(sqrt(n))):
         while n % p == 0:
             n = n // p
@@ -86,6 +99,8 @@ def list_factors_eratosthenes(n: int):
     O(n log log n). Returns factors of [1, n].
     Factors will be sorted.
     Note that len(factorses[0]) == len(factorses[1]) == 0.
+    >>> list_factors_eratosthenes(6)
+    [[], [], [2], [3], [2], [5], [2, 3]]
     """
     from typing import List
 
@@ -102,6 +117,8 @@ def factorize_eratosthenes(n: int):
     """
     O(n log n). Returns counters of factors of [1, n].
     Note that len(factorses[0]) == len(factorses[1]) == 0.
+    >>> factorize_eratosthenes(4)
+    [Counter(), Counter(), Counter({2: 1}), Counter({3: 1}), Counter({2: 2})]
     """
     from typing import Counter
 
@@ -124,6 +141,8 @@ def list_divisors_eratosthenes(n: int):
     O(n log n). Returns divisors of of [1, n].
     Divisors will be sorted.
     Note that divisorses[0] == [1].
+    >>> list_divisors_eratosthenes(6)
+    [[1], [1], [1, 2], [1, 3], [1, 2, 4], [1, 5], [1, 2, 3, 6]]
     """
     divisorses = [[1] for _ in range(n + 1)]
     for i in range(2, n + 1):
@@ -136,12 +155,16 @@ from typing import Counter
 
 
 def list_divisors_from_counter(factors: Counter[int]):
+    """
+    >>> list_divisors_from_counter(Counter({2: 2, 3: 1, 5: 1}))
+    [1, 5, 3, 15, 2, 10, 6, 30, 4, 20, 12, 60]
+    """
     q = [1]
     for k, v in factors.items():
         nq = []
         for m in q:
             nm = m
-            for i in range(v + 1):
+            for _ in range(v + 1):
                 nq.append(nm)
                 nm *= k
         q = nq
@@ -152,6 +175,10 @@ from typing import List
 
 
 def list_divisors_from_list(x: int, factors: List[int]):
+    """
+    >>> list_divisors_from_list(60, generate_primes(60))
+    [1, 5, 3, 15, 2, 10, 6, 30, 4, 20, 12, 60]
+    """
     q = [1]
     for p in factors:
         nq = []

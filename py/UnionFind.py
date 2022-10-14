@@ -4,6 +4,18 @@
 class UnionFind:
     """
     v1.1 @cexen
+    >>> uf = UnionFind(5)
+    >>> uf.unite(2, 3)
+    >>> uf.connected(0, 2)
+    False
+    >>> uf.connected(3, 2)
+    True
+    >>> uf.roots()
+    [0, 1, 2, 4]
+    >>> uf.root(3)
+    2
+    >>> uf.groupsize(3)
+    2
     """
 
     def __init__(self, n: int):

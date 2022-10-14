@@ -8,6 +8,7 @@ V_ = TypeVar("V_")
 class TreeReroot:
     """
     v1.5 cexen.
+    See `solve_*()` below for examples.
     """
 
     from typing import Callable, Optional, Tuple, List
@@ -117,6 +118,9 @@ class TreeReroot:
         return ans
 
 
+############
+# template #
+############
 # E = int
 # V = int
 # def add_e(v: V, i: int, e: int) -> E:

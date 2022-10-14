@@ -17,10 +17,10 @@ import heapq
 # K = TypeVar("K", bound=SupportsLt)
 
 
-K = TypeVar("K")
+K_ = TypeVar("K_")
 
 
-class HeapQueue(Generic[K]):
+class HeapQueue(Generic[K_]):
     """
     v1.1 @cexen
     >>> q = HeapQueue([3, 4, 4])
@@ -39,32 +39,44 @@ class HeapQueue(Generic[K]):
     4
     >>> len(q)
     3
+    >>> q.pop()
+    4
+    >>> q.pop()
+    4
+    >>> bool(q)
+    True
+    >>> q.pop()
+    5
+    >>> len(q)
+    0
+    >>> bool(q)
+    False
     """
 
     from typing import Iterable
 
-    def __init__(self, iterable: Iterable[K] = []):
+    def __init__(self, iterable: Iterable[K_] = []):
         from typing import List
 
-        self.heap: List[K] = list(iterable)
+        self.heap: List[K_] = list(iterable)
         heapq.heapify(self.heap)
 
     def __len__(self) -> int:
         return len(self.heap)
 
-    def append(self, v: K) -> None:
+    def append(self, v: K_) -> None:
         heapq.heappush(self.heap, v)
 
-    def appendpop(self, v: K) -> K:
+    def appendpop(self, v: K_) -> K_:
         return heapq.heappushpop(self.heap, v)
 
-    def popappend(self, v: K) -> K:
+    def popappend(self, v: K_) -> K_:
         return heapq.heapreplace(self.heap, v)
 
-    def pop(self) -> K:
+    def pop(self) -> K_:
         return heapq.heappop(self.heap)
 
-    def front(self) -> K:
+    def front(self) -> K_:
         return self.heap[0]
 
 

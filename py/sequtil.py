@@ -5,6 +5,11 @@ T_ = TypeVar("T_")
 
 
 def rleify(s: Sequence[T_]) -> List[Tuple[T_, int]]:
+    """
+    O(len(s)). Run Length Encoding.
+    >>> rleify("assassin")
+    [('a', 1), ('s', 2), ('a', 1), ('s', 2), ('i', 1), ('n', 1)]
+    """
     from typing import List, Tuple
 
     if not len(s):
