@@ -1,6 +1,6 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/SegtreeLazy.py
 import operator
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Iterable, List
 
 V_ = TypeVar("V_")
 X_ = TypeVar("X_")
@@ -8,11 +8,9 @@ X_ = TypeVar("X_")
 
 class SegtreeLazy(Generic[V_, X_]):
     """
-    v1.6 @cexen
+    v1.8 @cexen
     Based on: https://algo-logic.info/segment-tree/
     >>> st = SegtreeLazy[int, int]([0, 1, 2, 3, 4, 5], fvv=operator.add, fvxn=lambda v, x, n: v + n * x, fxx=operator.add, ev=0, ex=0)
-    >>> st.treev
-    [15, 6, 9, 1, 5, 9, 0, 0, 1, 2, 3, 4, 5, 0, 0]
     >>> st.grasp()
     15
     >>> st.grasp(2, 6)
@@ -20,25 +18,13 @@ class SegtreeLazy(Generic[V_, X_]):
     >>> st[0:2]
     [0, 1]
     >>> st.operate(100, 1, 4)
-    >>> st.treev
-    [315, 306, 9, 101, 205, 9, 0, 0, 101, 2, 3, 4, 5, 0, 0]
-    >>> st.treex
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 0, 0, 0, 0]
     >>> st.grasp()
     315
     >>> st.grasp(2, 6)
     214
     >>> st[0:2]
     [0, 101]
-    >>> st.treev
-    [315, 306, 9, 101, 205, 9, 0, 0, 101, 2, 3, 4, 5, 0, 0]
-    >>> st.treex
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 100, 0, 0, 0, 0]
     >>> st.operate(1000, 0, 3)
-    >>> st.treev
-    [3315, 3306, 9, 2101, 1205, 9, 0, 0, 101, 1102, 103, 4, 5, 0, 0]
-    >>> st.treex
-    [0, 0, 0, 0, 0, 0, 0, 1000, 1000, 0, 0, 0, 0, 0, 0]
     >>> st.grasp()
     3315
     >>> st.grasp(2, 6)
@@ -65,43 +51,42 @@ class SegtreeLazy(Generic[V_, X_]):
         ev: V_,
         ex: X_,
     ):
-
         values = list(iterable)
-        n = len(values)
+        self.n = n = len(values)
         self.r = range(n)
-        self.size: int = 2 ** (n - 1).bit_length()
+        self.size: int = 1 << (n - 1).bit_length()
         self.fvv = fvv
         self.fvxn = fvxn
         self.fxx = fxx
         self.ev = ev
         self.ex = ex
         self.treev = self._build(values)
-        self.treex = [ex] * (2 * self.size - 1)
-        self.treeb = [False] * (2 * self.size - 1)
+        self.treex = [ex] * (self.size << 1)
+        self.treeb = [0] * (self.size << 1)
 
     def __len__(self) -> int:
-        return len(self.r)
+        return self.n
 
     def _build(self, values: List[V_]) -> List[V_]:
-        treev = [self.ev] * (2 * self.size - 1)
-        treev[self.size - 1 : self.size - 1 + len(values)] = values
-        for i in reversed(range(self.size - 1)):
-            treev[i] = self.fvv(treev[(i << 1) + 1], treev[(i << 1) + 2])
+        treev = [self.ev] * (self.size << 1)
+        treev[self.size : self.size + len(values)] = values
+        for i in reversed(range(1, self.size)):
+            treev[i] = self.fvv(treev[i << 1], treev[(i << 1) + 1])
         return treev
 
     def _eval(self, i: int, l: int, r: int) -> None:
-        """O(1). treev[k] == reduce(fvv, data[l:r], ev)."""
-        if not self.treeb[i]:
+        """O(1). treev[i] == reduce(fvv, data[l:l+r], ev)."""
+        if self.treeb[i] == 0:
             return
-        n = r - l
-        if n > 1:
+        if r - l > 1:
+            self.treex[i << 1] = self.fxx(self.treex[i << 1], self.treex[i])
             self.treex[(i << 1) + 1] = self.fxx(self.treex[(i << 1) + 1], self.treex[i])
-            self.treex[(i << 1) + 2] = self.fxx(self.treex[(i << 1) + 2], self.treex[i])
-            self.treeb[(i << 1) + 1] = True
-            self.treeb[(i << 1) + 2] = True
+            self.treeb[i << 1] = 1
+            self.treeb[(i << 1) + 1] = 1
+        n = min(r, self.n) - min(l, self.n)
         self.treev[i] = self.fvxn(self.treev[i], self.treex[i], n)
         self.treex[i] = self.ex
-        self.treeb[i] = False
+        self.treeb[i] = 0
 
     @overload
     def __getitem__(self, i: int) -> V_:
@@ -129,8 +114,6 @@ class SegtreeLazy(Generic[V_, X_]):
         ...
 
     def __setitem__(self, i: Union[int, slice], v: Union[V_, Iterable[V_]]) -> None:
-        from typing import Iterable, Tuple, List
-
         v_: List[V_]
         if isinstance(i, int):
             r_ = self.r[i : i + 1]
@@ -147,27 +130,27 @@ class SegtreeLazy(Generic[V_, X_]):
         assert len(r_) == len(v_)
 
         nq: List[int] = []
-        q: List[Tuple[int, int, int]] = []
-        q.append((0, 0, self.size))
-        while len(q):
-            k, l, r = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
+        q = [1]
+        while q:
+            k = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
+            b = k.bit_length() - 1
+            w = self.size >> b
+            l = w * (k ^ (1 << b))
+            r = l + w
             self._eval(k, l, r)
             if not l < j or not i < r:
                 continue
-            if r - l > 1:
+            if w > 1:
                 nq.append(k)
-                q.append(((k << 1) + 1, l, (l + r) // 2))
-                q.append(((k << 1) + 2, (l + r) // 2, r))
-        nq.reverse()
+                q.append(k << 1)
+                q.append((k << 1) + 1)
         for ri, vi in zip(r_, v_):
-            self.treev[self.size - 1 + ri] = vi
-        for k in nq:
-            self.treev[k] = self.fvv(self.treev[(k << 1) + 1], self.treev[(k << 1) + 2])
+            self.treev[self.size + ri] = vi
+        for k in reversed(nq):
+            self.treev[k] = self.fvv(self.treev[k << 1], self.treev[(k << 1) + 1])
 
     def grasp(self, i: int = 0, j: Optional[int] = None) -> V_:
         """O(log n). reduce(fvv, data[i:j], ev)."""
-        from typing import Tuple, Deque
-
         if j is None:
             j = len(self)
         r_ = self.r[i:j]
@@ -175,25 +158,26 @@ class SegtreeLazy(Generic[V_, X_]):
             return self.ev
         i, j = r_[0], 1 + r_[-1]
 
-        q = Deque[Tuple[int, int, int]]()
-        q.append((0, 0, self.size))
+        q = [1]
         ans = self.ev
-        while len(q):
-            k, l, r = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
-            if not l < j or not i < r:
-                continue
+        while q:
+            k = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
+            b = k.bit_length() - 1
+            w = self.size >> b
+            l = w * (k ^ (1 << b))
+            r = l + w
             self._eval(k, l, r)
             if i <= l and r <= j:
                 ans = self.fvv(self.treev[k], ans)
-            else:
-                q.append(((k << 1) + 1, l, (l + r) // 2))
-                q.append(((k << 1) + 2, (l + r) // 2, r))
+            elif w > 1:
+                if i < (l + r) // 2:
+                    q.append(k << 1)
+                if (l + r) // 2 < j:
+                    q.append((k << 1) + 1)
         return ans
 
     def operate(self, x: X_, i: int = 0, j: Optional[int] = None) -> None:
         """O(log n). v = f(v, x) for v in data[i:j]."""
-        from typing import Deque, Tuple
-
         if j is None:
             j = len(self)
         r_ = self.r[i:j]
@@ -201,26 +185,27 @@ class SegtreeLazy(Generic[V_, X_]):
             return
         i, j = r_[0], 1 + r_[-1]
 
-        q = Deque[Tuple[int, int, int]]()
-        q.append((0, 0, self.size))
-        while len(q):
-            k, l, r = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
-            if k < 0:  # postorder
-                self.treev[~k] = self.fvv(
-                    self.treev[(~k << 1) + 1], self.treev[(~k << 1) + 2]
-                )
-                continue
+        nq: List[int] = []
+        q = [1]
+        while q:
+            k = q.pop()  # treev[k] == reduce(fvv, data[l:r], ev)
+            b = k.bit_length() - 1
+            w = self.size >> b
+            l = w * (k ^ (1 << b))
+            r = l + w
             self._eval(k, l, r)
             if not l < j or not i < r:
                 continue
             if i <= l and r <= j:
                 self.treex[k] = x
-                self.treeb[k] = True
+                self.treeb[k] = 1
                 self._eval(k, l, r)
-            else:
-                q.append((~k, l, r))  # postorder
-                q.append(((k << 1) + 1, l, (l + r) // 2))
-                q.append(((k << 1) + 2, (l + r) // 2, r))
+            elif w > 1:
+                nq.append(k)
+                q.append(k << 1)
+                q.append((k << 1) + 1)
+        for k in reversed(nq):
+            self.treev[k] = self.fvv(self.treev[k << 1], self.treev[(k << 1) + 1])
 
 
 class SegtreeLazyInt(SegtreeLazy[int, int]):
@@ -299,6 +284,10 @@ class SegtreeLazyInt(SegtreeLazy[int, int]):
 
 
 def solve_yosupojudge_setitem_grasp():
+    """
+    Point Set Range Composite
+    https://judge.yosupo.jp/problem/point_set_range_composite
+    """
     from typing import Tuple, List
 
     MOD = 998244353
@@ -308,14 +297,19 @@ def solve_yosupojudge_setitem_grasp():
         a, b = map(int, input().split())
         AB.append((a, b))
 
-    def fvv(vl: Tuple[int, int], vr: Tuple[int, int]) -> Tuple[int, int]:
-        a, b = vl
-        c, d = vr
+    V = Tuple[int, int]
+    X = int
+
+    def fvv(u: V, v: V) -> V:
+        a, b = u
+        c, d = v
         return a * c % MOD, (b * c + d) % MOD
 
-    # does not use operate (x)
-    seg = SegtreeLazy[Tuple[int, int], int](
-        AB, fvv=fvv, fvxn=lambda v, x, n: v, fxx=operator.add, ev=(1, 0), ex=0
+    def fxx(x: X, y: X) -> X:
+        return (x + y) % MOD
+
+    seg = SegtreeLazy[V, X](
+        AB, fvv=fvv, fvxn=lambda v, x, n: v, fxx=fxx, ev=(1, 0), ex=0
     )
     ans = []
     for _ in range(Q):
@@ -331,3 +325,83 @@ def solve_yosupojudge_setitem_grasp():
             raise RuntimeError
     for a in ans:
         print(a)
+
+
+def solve_yosupojudge_getitem_setitem_grasp():
+    """
+    Point Add Range Sum
+    https://judge.yosupo.jp/problem/point_add_range_sum
+    """
+    N, Q = map(int, input().split())
+    A = [int(v) for v in input().split()]
+    seg = SegtreeLazyInt(A)
+    ans = []
+    for _ in range(Q):
+        m, *args = map(int, input().split())
+        if m == 0:
+            p, x = args
+            seg[p] += x
+        elif m == 1:
+            l, r = args
+            ans.append(seg.grasp(l, r))
+    for a in ans:
+        print(a)
+
+
+def solve_yosupojudge_operate_grasp():
+    """
+    TLE
+    Range Affine Range Sum
+    https://judge.yosupo.jp/problem/range_affine_range_sum
+    """
+    from typing import Tuple
+
+    MOD = 998244353
+    N, Q = map(int, input().split())
+    A = [int(v) for v in input().split()]
+
+    V = int
+    X = Tuple[int, int]
+
+    def fvv(u: V, v: V) -> V:
+        return (u + v) % MOD
+
+    def fvxn(v: V, x: X, n: int) -> V:
+        a, b = x
+        return (a * v + b * n) % MOD
+
+    def fxx(x: X, y: X) -> X:
+        a, b = x
+        c, d = y
+        return a * c % MOD, (b * c + d) % MOD
+
+    seg = SegtreeLazy[V, X](A, fvv=fvv, fvxn=fvxn, fxx=fxx, ev=0, ex=(1, 0))
+    ans = []
+    for _ in range(Q):
+        m, *args = map(int, input().split())
+        if m == 0:
+            l, r, b, c = args
+            seg.operate((b, c), l, r)
+        elif m == 1:
+            l, r = args
+            ans.append(seg.grasp(l, r))
+        else:
+            raise RuntimeError
+    for a in ans:
+        print(a)
+
+
+############
+# template #
+############
+# V = int
+# X = int
+# def fvv(u: V, v: V) -> V:
+#     raise NotImplementedError
+# def fvxn(v: V, x: X, n: int) -> V:
+#     raise NotImplementedError
+# def fxx(x: X, y: X) -> X:
+#     raise NotImplementedError
+# ev = 0
+# ex = 0
+# seg = SegtreeLazy[V, X]([], fvv=fvv, fvxn=fvxn, fxx=fxx, ev=ev, ex=ex)
