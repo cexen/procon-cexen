@@ -1,7 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/mod.py
 class Mod:
     """
-    v1.2 @cexen
+    v1.3 @cexen
     Expected to be faster than Mint.
     >>> mod = Mod(998244353)
     >>> mod.fact(10)  # factorial (auto-cached)
@@ -9,8 +9,8 @@ class Mod:
     >>> mod.ifact(2)  # inverse of factorial (auto-cached)
     499122177
 
-    You may make cache manually (O(n)):
-    >>> mod._cache_ifacts(10000)
+    You may make cache manually (O(nmax)):
+    >>> mod = Mod(998244353, nmax=10000)
 
     >>> mod.comb(4, 2)  # combination; [x**2](1+x)**4
     6
@@ -28,13 +28,17 @@ class Mod:
 
     from typing import Optional
 
-    def __init__(self, mod: int = 998244353, is_prime: Optional[bool] = None):
+    def __init__(
+        self, mod: int = 998244353, nmax: int = 1, is_prime: Optional[bool] = None
+    ):
+        """O(nmax)."""
         self.mod = mod
         self.facts = [1, 1]
         self.ifacts = [1, 1]
         self.is_prime = is_prime
         if is_prime is None and mod in self.KNOWN_PRIMES:
             self.is_prime = True
+        self._cache_ifacts(nmax)
 
     @property
     def val(self) -> int:
