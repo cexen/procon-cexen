@@ -1,7 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/maxflow.py
 class MaxFlow:
     """
-    @cexen v0.2
+    @cexen v0.3
     Dinic.
     cf. [Dinic 法とその時間計算量 - みさわめも](https://misawa.github.io/others/flow/dinic_time_complexity.html)
     >>> mf = MaxFlow(4)
@@ -23,7 +23,7 @@ class MaxFlow:
         self.tos: List[int] = []
         self.caps: List[int] = []
         self.rems: List[int] = []
-        self.fws: List[bool] = []
+        self.fws: List[int] = []
         self.revs: List[int] = []
 
     def connect(self, i: int, j: int, cap: int) -> None:
@@ -38,7 +38,7 @@ class MaxFlow:
         self.tos.append(j)
         self.caps.append(cap)
         self.rems.append(cap)
-        self.fws.append(True)
+        self.fws.append(1)
         self.revs.append(k + 1)
 
         self.adjs[j].append(k + 1)
@@ -46,7 +46,7 @@ class MaxFlow:
         self.tos.append(i)
         self.caps.append(cap)
         self.rems.append(0)
-        self.fws.append(False)
+        self.fws.append(0)
         self.revs.append(k)
 
     def flow(self, s: int, t: int) -> int:
@@ -112,7 +112,7 @@ class MaxFlow:
         return ans
 
 
-class MaxBiMatch:
+class MaxBiMatchDinic:
     """
     @cexen v0.1
     Maximum bipartite matching based on Dinic
@@ -154,7 +154,7 @@ class MaxBiMatch:
         matches: List[Tuple[int, int]] = []
         for k in range(self.mf.m):
             if (
-                not self.mf.fws[k]
+                self.mf.fws[k] == 0
                 or self.mf.frs[k] == self._S
                 or self.mf.tos[k] == self._T
                 or self.mf.rems[k] > 0
