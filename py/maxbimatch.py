@@ -88,7 +88,7 @@ class MaxBiMatch:
                         continue
                     visited_l[ni] = 1
                     q.append(ni)
-        ls = [i for i in range(self.m) if not visited_l[i]]
+        ls = [i for i in range(self.m) if not visited_l[i] and self.adjs[i]]
         rs = [i for i in range(self.n) if visited_r[i]]
         return ls, rs
 
