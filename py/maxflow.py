@@ -53,6 +53,9 @@ class MaxFlow:
         """O(n**2 m)."""
         from collections import deque
 
+        assert 0 <= s < self.n
+        assert 0 <= t < self.n
+
         ans = 0
         while True:
             # dual step
