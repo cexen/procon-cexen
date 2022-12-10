@@ -1,7 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/fft.py
 class FFTNaive:
     """
-    @cexen v1.6
+    @cexen v1.7
     cf.)
     [競プロのための高速フーリエ変換](https://www.creativ.xyz/fast-fourier-transform/)
     [NTT(数論変換)のやさしい解説 - Senの競技プログラミング備忘録](https://sen-comp.hatenablog.com/entry/2021/02/06/180310)
@@ -120,7 +120,7 @@ class FFTNaive:
             arr[i] = arr[i] * ninv % self.mod
 
     def conv_cyclic(self, a: List[int], b: List[int], n: int) -> List[int]:
-        """O(n log n). returns c s.t. len(c) == n and ck == sum(ai * bj if i + j % n == k)"""
+        """O(n log n). returns c s.t. len(c) == n and ck == sum(ai * bj if (i + j) % n == k)"""
         if not n >= max(len(a), len(b)):
             raise ValueError("n must be >= max(len(a), len(b))")
         if n != n & (-n):
@@ -142,27 +142,34 @@ class FFTNaive:
     def inv(self, a: List[int], n: int) -> List[int]:
         """
         O(n log n). returns b' s.t. b[:n] == b' and a*b == [1, 0, 0, ...].
-        cf. https://nyaannyaan.github.io/library/fps/formal-power-series.hpp.html
+        cf.
+        https://nyaannyaan.github.io/library/fps/formal-power-series.hpp.html
+        https://nyaannyaan.github.io/library/fps/ntt-friendly-fps.hpp
+        https://paper.dropbox.com/doc/fps-EoHXQDZxfduAB8wD1PMBW
         """
         assert len(a) > 0 and n >= 0
-        assert a[0] != 0  # singular
-        b = [pow(a[0], self.mod - 2, self.mod)]
+        assert a[0] != 0  # non-singular
+        b = [0] * n
+        b[0] = pow(a[0], self.mod - 2, self.mod)
         for i in range((n - 1).bit_length()):
-            # abb = self.conv(a, self.conv(b, b))  # includes redundant fft() & ifft() s
-            l = len(a) + 2 * len(b) - 2
-            l = 1 << (l - 1).bit_length()
-            fa = a + [0] * (l - len(a))
-            fb = b + [0] * (l - len(b))
-            self.fft(fa)
-            self.fft(fb)
-            abb = [u * v % self.mod * v % self.mod for u, v in zip(fa, fb)]
-            self.ifft(abb)
-
-            b.extend([0] * ((2 << i) - len(b)))
-            for j in range(2 << i):
-                b[j] = (2 * b[j] - abb[j]) % self.mod
-        while len(b) > n:
-            b.pop()
+            d = 1 << i
+            f = [0] * (d << 1)
+            g = [0] * (d << 1)
+            j = min(len(a), d << 1)
+            f[:j] = a[:j]
+            g[:d] = b[:d]
+            self.fft(f)
+            self.fft(g)
+            for j in range(d << 1):
+                f[j] = f[j] * g[j] % self.mod
+            self.ifft(f)
+            f[:d] = [0] * d
+            self.fft(f)
+            for j in range(d << 1):
+                f[j] = f[j] * g[j] % self.mod
+            self.ifft(f)
+            for j in range(d, min(n, d << 1)):
+                b[j] = -f[j] % self.mod
         return b
 
     def div_at_n(self, a: List[int], b: List[int], n: int) -> int:
@@ -189,3 +196,37 @@ class FFT:
     """
 
     ...
+
+
+# --------------------
+
+
+def solve_atcoder_practice2_f():
+    """
+    AtCoder ACL Practice Contest F - Convolution
+    https://atcoder.jp/contests/practice2/tasks/practice2_f
+    """
+    MOD = 998244353
+    fft = FFTNaive(MOD)
+    N, M = map(int, input().split())
+    A = [int(v) for v in input().split()]
+    B = [int(v) for v in input().split()]
+    C = fft.conv(A, B)
+    print(*C)
+
+
+def solve_yosupojudge_inv():
+    """
+    Library Checker: Inv of Formal Power Series
+    https://judge.yosupo.jp/problem/inv_of_formal_power_series
+    """
+    MOD = 998244353
+    fft = FFTNaive(MOD)
+    N = int(input())
+    A = [int(v) for v in input().split()]
+    B = fft.inv(A, N)
+    print(*B)
+
+
+# solve_atcoder_practice2_f()
+solve_yosupojudge_inv()
