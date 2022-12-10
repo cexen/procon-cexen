@@ -239,7 +239,7 @@ def ceillog(n: int, b: int = 10) -> int:
     return ans
 
 
-def pow(base, exp: int):
+def pow_iter(base, exp: int):
     ans = 1
     for i in reversed(range(exp.bit_length())):
         ans = ans * ans
