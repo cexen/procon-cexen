@@ -25,6 +25,138 @@ def popcount(n: int) -> int:
 from typing import Sequence
 
 
+class UnsuccinctBV(Sequence[int]):
+    """
+    v1.0 @cexen.
+    Not succinct but simple Bit Vector.
+    cf. https://miti-7.hatenablog.com/entry/2018/04/15/155638
+
+    >>> bv = UnsuccinctBV([1, 0, 0, 0, 1] + [0] * 10)
+    >>> len(bv)
+    15
+    >>> bv[0]
+    1
+    >>> bv[1]
+    0
+    >>> bv[4:1:-1]
+    [1, 0, 0]
+    >>> bv.rank1(0), bv.rank0(0)
+    (0, 0)
+    >>> bv.rank1(1), bv.rank0(1)
+    (1, 0)
+    >>> bv.rank1(4), bv.rank1(5), bv.rank1(6)
+    (1, 2, 2)
+    >>> bv.rank0(4), bv.rank0(5), bv.rank0(6)
+    (3, 3, 4)
+    >>> bv.rank1(14), bv.rank1(15)
+    (2, 2)
+    >>> bv.rank0(14), bv.rank0(15)
+    (12, 13)
+    >>> assert all(bv.rank1(i) == bv.rank(1, i) for i in range(15))
+    >>> assert all(bv.rank0(i) == bv.rank(0, i) for i in range(15))
+    >>> [bv.select1(k) for k in range(15)]
+    [0, 4, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
+    >>> [bv.select0(k) for k in range(15)]
+    [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15]
+    >>> assert all(bv.select1(i) == bv.select(1, i) for i in range(15))
+    >>> assert all(bv.select0(i) == bv.select(0, i) for i in range(15))
+    >>> bv2 = UnsuccinctBV([0] * 5000 + [1] + [0] * 5000)
+    >>> len(bv2)
+    10001
+    >>> bv2.rank1(5000), bv2.rank1(5001), bv2.rank1(5002)
+    (0, 1, 1)
+    >>> bv2.rank0(5000), bv2.rank0(5001), bv2.rank0(5002)
+    (5000, 5000, 5001)
+    >>> bv2.select1(0), bv2.select1(1), bv2.select1(10**9)
+    (5000, 10001, 10001)
+    >>> bv2.select0(4999), bv2.select0(5000), bv2.select0(10**9)
+    (4999, 5001, 10001)
+    """
+
+    from typing import Iterable, Union, Tuple, List, overload
+
+    def __init__(self, bits: Iterable[int]):
+        """O(len(bits))."""
+        from typing import List
+
+        bits_ = list(bits)
+        self.n = len(bits_)
+        self.r1 = r1 = [0] * (self.n + 1)
+        self.s0: List[int] = []
+        self.s1: List[int] = []
+        for i, v in enumerate(bits_):
+            r1[i + 1] = r1[i] + v
+            if v:
+                self.s1.append(i)
+            else:
+                self.s0.append(i)
+
+    def __len__(self) -> int:
+        """O(1)."""
+        return self.n
+
+    @overload
+    def __getitem__(self, i: int) -> int:
+        """O(1)."""
+        ...
+
+    @overload
+    def __getitem__(self, i: slice) -> List[int]:
+        """O(len(i))."""
+        ...
+
+    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
+        if isinstance(i, slice):
+            return [self[j] for j in range(len(self))[i]]
+        if not 0 <= i < self.n:
+            raise IndexError
+        return self.r1[i + 1] - self.r1[i]
+
+    def rank1(self, j: int) -> int:
+        """O(1). Returns self[:j].count(1)."""
+        assert 0 <= j <= self.n
+        return self.r1[j]
+
+    def rank0(self, j: int) -> int:
+        """O(1). Returns self[:j].count(0)."""
+        return j - self.rank1(j)
+
+    def rankall(self, j: int) -> Tuple[int, int]:
+        """O(1). Returns (self[:j].count(0), self[:j].count(1))."""
+        k = self.rank1(j)
+        return j - k, k
+
+    def rank(self, v: int, j: int) -> int:
+        """O(1). Returns self[:j].count(v)."""
+        return self.rank1(j) if v else self.rank0(j)
+
+    def select1(self, k: int) -> int:
+        """
+        O(1).
+        Returns argwhere(self[:], 1)[k].
+        Returns n if not found.
+        """
+        assert 0 <= k
+        return self.s1[k] if k < len(self.s1) else self.n
+
+    def select0(self, k: int) -> int:
+        """
+        O(1).
+        Returns argwhere(self[:], 0)[k].
+        Returns n if not found.
+        """
+        assert 0 <= k
+        return self.s0[k] if k < len(self.s0) else self.n
+
+    def select(self, v: int, k: int) -> int:
+        """
+        O(1).
+        Returns argwhere(self[:], v)[k].
+        Returns n if not found.
+        """
+        return self.select1(k) if v else self.select0(k)
+
+
 class SuccinctBV(Sequence[int]):
     """
     v1.4 @cexen.
@@ -211,7 +343,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.7 @cexen.
+    v1.8 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -271,7 +403,7 @@ class WaveletMatrix(Sequence[int]):
         if bitlen is None:
             # ensure `max(tab) < self.inf == (1 << bitlen) - 1`
             bitlen = (1 + max(tab, default=0)).bit_length()
-        matrix: List[SuccinctBV] = []
+        matrix: List[UnsuccinctBV] = []
         num0s: List[int] = []
         for ib in reversed(range(bitlen)):
             bits = [(v >> ib) & 1 for v in tab]
@@ -284,7 +416,7 @@ class WaveletMatrix(Sequence[int]):
                     zeros.append(v)
             tab[: len(zeros)] = zeros
             tab[len(zeros) :] = ones
-            matrix.append(SuccinctBV(bits))
+            matrix.append(UnsuccinctBV(bits))
             num0s.append(len(zeros))
         d_idxs: Dict[int, int] = {}
         for i in reversed(range(len(tab))):
