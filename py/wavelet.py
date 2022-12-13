@@ -580,7 +580,11 @@ class WaveletMatrix(Sequence[int]):
         return ans
 
 
+# --------------------
+
+
 def solve_yosupojudge_rank():
+    # Library Checker: Static Range Frequency
     # https://judge.yosupo.jp/problem/static_range_frequency
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
@@ -594,6 +598,7 @@ def solve_yosupojudge_rank():
 
 
 def solve_yosupojudge_rangefreq():
+    # Library Checker: Static Range Frequency
     # https://judge.yosupo.jp/problem/static_range_frequency
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
@@ -607,6 +612,7 @@ def solve_yosupojudge_rangefreq():
 
 
 def solve_yosupojudge_quantile():
+    # Library Checker: Range Kth Smallest
     # https://judge.yosupo.jp/problem/range_kth_smallest
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
