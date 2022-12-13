@@ -25,21 +25,21 @@ def popcount(n: int) -> int:
 from typing import Sequence
 
 
-class SuccinctBV(Sequence[bool]):
+class SuccinctBV(Sequence[int]):
     """
-    v1.3 @cexen.
+    v1.4 @cexen.
     Succinct Bit Vector.
     cf. https://miti-7.hatenablog.com/entry/2018/04/15/155638
 
-    >>> bv = SuccinctBV([True, False, False, False, True] + [False] * 10)
+    >>> bv = SuccinctBV([1, 0, 0, 0, 1] + [0] * 10)
     >>> len(bv)
     15
     >>> bv[0]
-    True
+    1
     >>> bv[1]
-    False
+    0
     >>> bv[4:1:-1]
-    [True, False, False]
+    [1, 0, 0]
     >>> bv.rank1(0), bv.rank0(0)
     (0, 0)
     >>> bv.rank1(1), bv.rank0(1)
@@ -52,15 +52,15 @@ class SuccinctBV(Sequence[bool]):
     (2, 2)
     >>> bv.rank0(14), bv.rank0(15)
     (12, 13)
-    >>> assert all(bv.rank1(i) == bv.rank(True, i) for i in range(15))
-    >>> assert all(bv.rank0(i) == bv.rank(False, i) for i in range(15))
+    >>> assert all(bv.rank1(i) == bv.rank(1, i) for i in range(15))
+    >>> assert all(bv.rank0(i) == bv.rank(0, i) for i in range(15))
     >>> [bv.select1(k) for k in range(15)]
     [0, 4, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
     >>> [bv.select0(k) for k in range(15)]
     [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15]
-    >>> assert all(bv.select1(i) == bv.select(True, i) for i in range(15))
-    >>> assert all(bv.select0(i) == bv.select(False, i) for i in range(15))
-    >>> bv2 = SuccinctBV([False] * 5000 + [True] + [False] * 5000)
+    >>> assert all(bv.select1(i) == bv.select(1, i) for i in range(15))
+    >>> assert all(bv.select0(i) == bv.select(0, i) for i in range(15))
+    >>> bv2 = SuccinctBV([0] * 5000 + [1] + [0] * 5000)
     >>> len(bv2)
     10001
     >>> bv2.rank1(5000), bv2.rank1(5001), bv2.rank1(5002)
@@ -78,7 +78,7 @@ class SuccinctBV(Sequence[bool]):
 
     from typing import Iterable, Union, Tuple, List, overload
 
-    def __init__(self, bits: Iterable[bool]):
+    def __init__(self, bits: Iterable[int]):
         """O(len(bits))."""
         bits_ = list(bits)
         self.n = len(bits_)
@@ -94,7 +94,7 @@ class SuccinctBV(Sequence[bool]):
         self.lb = lb = [0] * (1 + (self.n + self.s - 1) // self.s)
         for i, v in enumerate(bits_):
             d, m = divmod(i, self.s)
-            b = int(v)
+            b = v
             ll[1 + i // self.l] += b
             ls[1 + d] += b
             lb[d] |= b << m
@@ -112,25 +112,25 @@ class SuccinctBV(Sequence[bool]):
         return self.n
 
     @overload
-    def __getitem__(self, i: int) -> bool:
+    def __getitem__(self, i: int) -> int:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[bool]:
+    def __getitem__(self, i: slice) -> List[int]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[bool, List[bool]]:
+    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
         if isinstance(i, slice):
             return [self[j] for j in range(len(self))[i]]
         if not 0 <= i < self.n:
             raise IndexError
         d, m = divmod(i, self.s)
-        return bool((self.lb[d] >> m) & 1)
+        return (self.lb[d] >> m) & 1
 
     def rank1(self, j: int) -> int:
-        """O(1). Returns self[:j].count(True)."""
+        """O(1). Returns self[:j].count(1)."""
         assert 0 <= j <= self.n
         x = j // self.l
         d, m = divmod(j, self.s)
@@ -138,19 +138,19 @@ class SuccinctBV(Sequence[bool]):
         return self.ll[x] + self.ls[d] + self.P[self.lb[d] & mask]
 
     def rank0(self, j: int) -> int:
-        """O(1). Returns self[:j].count(False)."""
+        """O(1). Returns self[:j].count(0)."""
         return j - self.rank1(j)
 
     def rankall(self, j: int) -> Tuple[int, int]:
-        """O(1). Returns (self[:j].count(False), self[:j].count(True))."""
+        """O(1). Returns (self[:j].count(0), self[:j].count(1))."""
         k = self.rank1(j)
         return j - k, k
 
-    def rank(self, v: bool, j: int) -> int:
+    def rank(self, v: int, j: int) -> int:
         """O(1). Returns self[:j].count(v)."""
         return self.rank1(j) if v else self.rank0(j)
 
-    def select(self, v: bool, k: int) -> int:
+    def select(self, v: int, k: int) -> int:
         """
         O(log n).
         Returns argwhere(self[:], v)[k].
@@ -183,7 +183,7 @@ class SuccinctBV(Sequence[bool]):
         k -= self.ls[yl] if v else min(self.s * yl, self.n) - self.s * yl0 - self.ls[yl]
 
         b = self.lb[yl]
-        nv = int(not v)
+        nv = v ^ 1
         for i in range(self.s):  # linear search
             k -= ((b >> i) & 1) ^ nv
             if k < 0:
@@ -195,23 +195,23 @@ class SuccinctBV(Sequence[bool]):
     def select1(self, k: int) -> int:
         """
         O(log n).
-        Returns argwhere(self[:], True)[k].
+        Returns argwhere(self[:], 1)[k].
         Returns n if not found.
         """
-        return self.select(True, k)
+        return self.select(1, k)
 
     def select0(self, k: int) -> int:
         """
         O(log n).
-        Returns argwhere(self[:], False)[k].
+        Returns argwhere(self[:], 0)[k].
         Returns n if not found.
         """
-        return self.select(False, k)
+        return self.select(0, k)
 
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.5 @cexen.
+    v1.6 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -274,7 +274,7 @@ class WaveletMatrix(Sequence[int]):
         matrix: List[SuccinctBV] = []
         num0s: List[int] = []
         for ib in reversed(range(bitlen)):
-            bits = [1 == (v >> ib) & 1 for v in tab]
+            bits = [(v >> ib) & 1 for v in tab]
             zeros: List[int] = []
             ones: List[int] = []
             for v, b in zip(tab, bits):
@@ -332,7 +332,7 @@ class WaveletMatrix(Sequence[int]):
         for ib in range(self.bitlen):
             nib = self.bitlen - 1 - ib
             bv, num0 = self.matrix[ib], self.num0s[ib]
-            b = bool((v >> nib) & 1)
+            b = (v >> nib) & 1
             offset = num0 if b else 0
             j = offset + bv.rank(b, j)
         return j - self.d_idxs[v]
@@ -349,7 +349,7 @@ class WaveletMatrix(Sequence[int]):
         for ib in reversed(range(self.bitlen)):
             nib = self.bitlen - 1 - ib
             bv, num0 = self.matrix[ib], self.num0s[ib]
-            b = bool((v >> nib) & 1)
+            b = (v >> nib) & 1
             offset = num0 if b else 0
             k = bv.select(b, k - offset)
         return k
@@ -437,7 +437,7 @@ class WaveletMatrix(Sequence[int]):
             bv, num0 = self.matrix[ib], self.num0s[ib]
             l0, l1 = bv.rankall(i)
             r0, r1 = bv.rankall(j)
-            b = bool((y >> nib) & 1)
+            b = (y >> nib) & 1
             if b:
                 ans += r0 - l0
                 i = num0 + l1
@@ -472,8 +472,8 @@ class WaveletMatrix(Sequence[int]):
 
         if k == 0:
             return []
-        TypeQ = List[Tuple[int, int, int, int, bool, bool]]
-        q: TypeQ = [(0, 0, i, j, False, False)]
+        TypeQ = List[Tuple[int, int, int, int, int, int]]
+        q: TypeQ = [(0, 0, i, j, 0, 0)]
         ans: List[Tuple[int, int]] = []
         while q:
             v, ib, i, j, gtx, lty = q.pop()
@@ -488,15 +488,15 @@ class WaveletMatrix(Sequence[int]):
             bv, num0 = self.matrix[ib], self.num0s[ib]
             l0, l1 = bv.rankall(i)
             r0, r1 = bv.rankall(j)
-            x_is_0 = (x >> nib) & 1 == 0
-            y_is_1 = (y >> nib) & 1 == 1
+            x_is_0 = (x >> nib) & 1 ^ 1
+            y_is_1 = (y >> nib) & 1
             nq: TypeQ = []
             if l1 < r1 and (lty or y_is_1):
                 l1 += num0
                 r1 += num0
-                nq.append((v + 1 << nib, ib + 1, l1, r1, gtx or x_is_0, lty))
+                nq.append((v + 1 << nib, ib + 1, l1, r1, gtx | x_is_0, lty))
             if l0 < r0 and (gtx or x_is_0):
-                nq.append((v, ib + 1, l0, r0, gtx, lty or y_is_1))
+                nq.append((v, ib + 1, l0, r0, gtx, lty | y_is_1))
             if reverse:
                 nq.reverse()
             q.extend(nq)
