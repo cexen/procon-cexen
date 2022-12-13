@@ -211,7 +211,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.6 @cexen.
+    v1.7 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -262,15 +262,15 @@ class WaveletMatrix(Sequence[int]):
     def __init__(self, iterable: Iterable[int], bitlen: Optional[int] = None):
         """
         O(n * bitlen) where n == len(iterable).
-        If bitlen omitted: bitlen = 1 + max(iterable).bit_length().
+        If bitlen omitted: bitlen = (1 + max(iterable)).bit_length().
         """
         from typing import List, Dict
 
         tab = list(iterable)
         assert min(tab, default=0) >= 0
         if bitlen is None:
-            # take one more bit to ensure `max(tab) < (1 << bitlen) - 1`
-            bitlen = 1 + max(tab, default=0).bit_length()
+            # ensure `max(tab) < self.inf == (1 << bitlen) - 1`
+            bitlen = (1 + max(tab, default=0)).bit_length()
         matrix: List[SuccinctBV] = []
         num0s: List[int] = []
         for ib in reversed(range(bitlen)):
@@ -291,6 +291,7 @@ class WaveletMatrix(Sequence[int]):
             d_idxs[tab[i]] = i
 
         self.bitlen = bitlen
+        self.inf = (1 << bitlen) - 1
         self.matrix = matrix
         self.num0s = num0s
         self.d_idxs = d_idxs
@@ -431,6 +432,7 @@ class WaveletMatrix(Sequence[int]):
         if x > 0:
             return self.rangefreq(i, j, 0, y) - self.rangefreq(i, j, 0, x)
         assert x == 0
+        y = min(y, self.inf)
         ans = 0
         for ib in range(self.bitlen):
             nib = self.bitlen - 1 - ib
@@ -467,6 +469,8 @@ class WaveletMatrix(Sequence[int]):
         if y is None:
             y = (1 << self.bitlen) - 1
         assert 0 <= x <= y
+        x = min(x, self.inf)
+        y = min(y, self.inf)
         if k is None:
             k = j - i
 
