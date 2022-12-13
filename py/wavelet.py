@@ -343,7 +343,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.8 @cexen.
+    v1.9 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -357,9 +357,9 @@ class WaveletMatrix(Sequence[int]):
     4
     >>> wm[:]
     [3, 1, 4, 1, 5, 9, 2]
-    >>> [wm.rank(1, j) for j in range(1 + len(wm))]
+    >>> [wm.rank(1, 0, j) for j in range(1 + len(wm))]
     [0, 0, 1, 1, 2, 2, 2, 2]
-    >>> [wm.rank(7, j) for j in range(1 + len(wm))]
+    >>> [wm.rank(7, 0, j) for j in range(1 + len(wm))]
     [0, 0, 0, 0, 0, 0, 0, 0]
     >>> [wm.select(1, k) for k in range(len(wm))]
     [1, 3, 7, 7, 7, 7, 7]
@@ -418,15 +418,11 @@ class WaveletMatrix(Sequence[int]):
             tab[len(zeros) :] = ones
             matrix.append(UnsuccinctBV(bits))
             num0s.append(len(zeros))
-        d_idxs: Dict[int, int] = {}
-        for i in reversed(range(len(tab))):
-            d_idxs[tab[i]] = i
 
         self.bitlen = bitlen
         self.inf = (1 << bitlen) - 1
         self.matrix = matrix
         self.num0s = num0s
-        self.d_idxs = d_idxs
 
     def __len__(self) -> int:
         """O(1)."""
@@ -457,18 +453,40 @@ class WaveletMatrix(Sequence[int]):
             i = offset + bv.rank(b, i)
         return ans
 
-    def rank(self, v: int, j: int) -> int:
-        """O(bitlen). Returns self[:j].count(v)."""
+    def _lsbindex(self, j: int, v: int) -> int:
+        """O(bitlen)."""
         assert 0 <= j <= len(self)
-        if v not in self.d_idxs:
-            return 0
+        assert 0 <= v
+        v = min(v, self.inf)
         for ib in range(self.bitlen):
             nib = self.bitlen - 1 - ib
             bv, num0 = self.matrix[ib], self.num0s[ib]
+            r0, r1 = bv.rankall(j)
             b = (v >> nib) & 1
-            offset = num0 if b else 0
-            j = offset + bv.rank(b, j)
-        return j - self.d_idxs[v]
+            if b:
+                j = num0 + r1
+            else:
+                j = r0
+        return j
+
+    def rank(self, i: int, j: int, v: int) -> int:
+        """O(bitlen). Returns self[i:j].count(v)."""
+        assert 0 <= i <= j <= len(self)
+        assert 0 <= v
+        v = min(v, self.inf)
+        for ib in range(self.bitlen):
+            nib = self.bitlen - 1 - ib
+            bv, num0 = self.matrix[ib], self.num0s[ib]
+            l0, l1 = bv.rankall(i)
+            r0, r1 = bv.rankall(j)
+            b = (v >> nib) & 1
+            if b:
+                i = num0 + l1
+                j = num0 + r1
+            else:
+                i = l0
+                j = r0
+        return j - i
 
     def select(self, v: int, k: int) -> int:
         """
@@ -476,9 +494,10 @@ class WaveletMatrix(Sequence[int]):
         Returns argwhere(self[:], v)[k].
         Returns len(self) if not found.
         """
-        if v not in self.d_idxs:
-            return len(self)
-        k = self.d_idxs[v] + k
+        assert 0 <= v
+        v = min(v, self.inf)
+        assert 0 <= k
+        k += self._lsbindex(v, 0)
         for ib in reversed(range(self.bitlen)):
             nib = self.bitlen - 1 - ib
             bv, num0 = self.matrix[ib], self.num0s[ib]
@@ -559,7 +578,7 @@ class WaveletMatrix(Sequence[int]):
         """O(bitlen). Returns len([v for v in self[i:j] if x <= v < y])."""
         assert 0 <= i <= j <= len(self)  # accept i == len(self) for len(self) == 0
         if y is None:
-            y = (1 << self.bitlen) - 1
+            y = self.inf
         assert 0 <= x <= y
         if x > 0:
             return self.rangefreq(i, j, 0, y) - self.rangefreq(i, j, 0, x)
@@ -599,7 +618,7 @@ class WaveletMatrix(Sequence[int]):
 
         assert 0 <= i <= j <= len(self)
         if y is None:
-            y = (1 << self.bitlen) - 1
+            y = self.inf
         assert 0 <= x <= y
         x = min(x, self.inf)
         y = min(y, self.inf)
@@ -728,7 +747,7 @@ def solve_yosupojudge_rank():
     wav = WaveletMatrix(A)
     for _ in range(Q):
         l, r, x = map(int, input().split())
-        ans.append(wav.rank(x, r) - wav.rank(x, l))
+        ans.append(wav.rank(l, r, x))
     for a in ans:
         print(a)
 
