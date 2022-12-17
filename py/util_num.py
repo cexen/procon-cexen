@@ -96,7 +96,7 @@ def fact(n: int):
 
 def list_factors_eratosthenes(n: int):
     """
-    O(n log log n). Returns factors of [1, n].
+    O(n log log n). Returns factors of [0, n].
     Factors will be sorted.
     Note that len(factorses[0]) == len(factorses[1]) == 0.
     >>> list_factors_eratosthenes(6)
@@ -115,7 +115,7 @@ def list_factors_eratosthenes(n: int):
 
 def factorize_eratosthenes(n: int):
     """
-    O(n log n). Returns counters of factors of [1, n].
+    O(n log n). Returns counters of factors of [0, n].
     Note that len(factorses[0]) == len(factorses[1]) == 0.
     >>> factorize_eratosthenes(4)
     [Counter(), Counter(), Counter({2: 1}), Counter({3: 1}), Counter({2: 2})]
@@ -138,7 +138,7 @@ def factorize_eratosthenes(n: int):
 
 def list_divisors_eratosthenes(n: int):
     """
-    O(n log n). Returns divisors of of [1, n].
+    O(n log n). Returns divisors of of [0, n].
     Divisors will be sorted.
     Note that divisorses[0] == [1].
     >>> list_divisors_eratosthenes(6)
