@@ -1,13 +1,14 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/segtree_primal.py
 import operator
-from typing import TypeVar, Sequence
+from typing import TypeVar, Sequence, Iterable, Optional, Deque, Set, cast
+
 
 V_ = TypeVar("V_")
 
 
 class SegtreePrimal(Sequence[V_]):
     """
-    v1.5 @cexen
+    v1.6 @cexen
     >>> st = SegtreePrimal[int](4, f=operator.add, e=0)
     >>> st[1:] = [4, 9, 16]
     >>> st[0] = -99
@@ -24,7 +25,7 @@ class SegtreePrimal(Sequence[V_]):
     def __init__(self, n: int, f: Callable[[V_, V_], V_], e: V_):
         """all(f(v, e) == f(e, v) == v for v in data)"""
         self.r = range(n)
-        self.size: int = 2 ** ((n - 1).bit_length())
+        self.size = 1 << (n - 1).bit_length()
         self.tree = [e] * (2 * self.size - 1)
         self.f = f
         self.e = e
@@ -89,35 +90,36 @@ class SegtreePrimal(Sequence[V_]):
         ...
 
     def __setitem__(self, i: Union[int, slice], v: Union[V_, Iterable[V_]]) -> None:
-        from typing import Iterable, Deque, Set
-
         if isinstance(i, int):
-            r = range(i, i + 1)
+            j = self.size - 1 + self.r[i]
+            self.tree[j] = cast(V_, v)
+            j = (j - 1) >> 1
+            while j >= 0:
+                vl = self.tree[(j << 1) + 1]
+                vr = self.tree[(j << 1) + 2]
+                self.tree[j] = self.f(vl, vr)
+                j = (j - 1) >> 1
         else:
             r = self.r[i]
-        if not isinstance(v, Iterable):
-            v = [v]
-
-        q = Deque[int]()
-        s: Set[int] = set()
-
-        for ri, vi in zip(r, v):
-            j = self.size - 1 + ri
-            self.tree[j] = vi
-            self._addnext(q, s, j)
-        while len(q):
-            j = q.popleft()
-            vl = self.tree[(j << 1) + 1]
-            vr = self.tree[(j << 1) + 2]
-            self.tree[j] = self.f(vl, vr)
-            self._addnext(q, s, j)
-
-    @staticmethod
-    def _addnext(q: Deque[int], s: Set[int], j: int):
-        k = (j - 1) >> 1
-        if k >= 0 and k not in s:
-            q.append(k)
-            s.add(k)
+            assert isinstance(v, Iterable)
+            q = Deque[int]()
+            s: Set[int] = set()
+            for ri, vi in zip(r, v):
+                j = self.size - 1 + ri
+                self.tree[j] = vi
+                nj = (j - 1) >> 1
+                if nj >= 0 and nj not in s:
+                    q.append(nj)
+                    s.add(nj)
+            while q:
+                j = q.popleft()
+                vl = self.tree[(j << 1) + 1]
+                vr = self.tree[(j << 1) + 2]
+                self.tree[j] = self.f(vl, vr)
+                nj = (j - 1) >> 1
+                if nj >= 0 and nj not in s:
+                    q.append(nj)
+                    s.add(nj)
 
 
 class SegtreePrimalInt(SegtreePrimal[int]):
@@ -129,7 +131,7 @@ class SegtreePrimalInt(SegtreePrimal[int]):
 
 class Segtree2DPrimal(Sequence[Sequence[V_]]):
     """
-    v1.3 @cexen
+    v1.4 @cexen
     """
 
     from typing import Iterable, Callable, Union, Optional, List, Tuple, overload
@@ -140,8 +142,8 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         """all(f(v, e) == f(e, v) == v for v in data)"""
         self.ry = range(h)
         self.rx = range(w)
-        self.sizey: int = 2 ** ((h - 1).bit_length())
-        self.sizex: int = 2 ** ((w - 1).bit_length())
+        self.sizey = 1 << (h - 1).bit_length()
+        self.sizex = 1 << (w - 1).bit_length()
         self.tree = [[e] * (2 * self.sizex - 1) for _ in range(2 * self.sizey - 1)]
         self.f = f
         self.e = e
@@ -243,7 +245,7 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         """O(len(y) * len(x))."""
         ...
 
-    def __getitem__(
+    def __getitem__(  # type: ignore
         self, yx: Union[Index, Tuple[Index, Index]]
     ) -> Union[V_, List[V_], List[List[V_]]]:
         if not isinstance(yx, tuple):
@@ -282,8 +284,8 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         """O(len(y) len(x) log h log w). Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:
-        from typing import Deque, Set, Tuple
+    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:  # type: ignore
+        from typing import Deque, Set
 
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
@@ -299,18 +301,22 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         else:
             rx = self.rx[x]
 
-        q = Deque[Tuple[int, int]]()
-        s: Set[Tuple[int, int]] = set()
+        w = 2 * self.sizex
 
-        def addnext(q: Deque[Tuple[int, int]], s: Set[Tuple[int, int]], i: int, j: int):
+        q = Deque[int]()
+        s: Set[int] = set()
+
+        def addnext(q: Deque[int], s: Set[int], i: int, j: int):
             ni = (i - 1) >> 1
             nj = (j - 1) >> 1
-            if ni >= 0 and (ni, j) not in s:
-                q.append((ni, j))
-                s.add((ni, j))
-            if nj >= 0 and (i, nj) not in s:
-                q.append((i, nj))
-                s.add((i, nj))
+            nk = ni * w + j
+            if ni >= 0 and nk not in s:
+                q.append(nk)
+                s.add(nk)
+            nk = i * w + nj
+            if nj >= 0 and nk not in s:
+                q.append(nk)
+                s.add(nk)
 
         for i, row in zip(ry, v):
             i = self.sizey - 1 + i
@@ -318,8 +324,9 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
                 j = self.sizex - 1 + j
                 self.tree[i][j] = vi
                 addnext(q, s, i, j)
-        while len(q):
-            i, j = q.popleft()
+        while q:
+            k = q.popleft()
+            i, j = divmod(k, w)
             if i >= self.sizey - 1:
                 vl = self.tree[i][(j << 1) + 1]
                 vr = self.tree[i][(j << 1) + 2]
@@ -490,7 +497,7 @@ class SegtreePrimalCompressInt(SegtreePrimalCompress[int]):
 
 class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
     """
-    v1.2 @cexen
+    v1.3 @cexen
     Based on: https://blog.hamayanhamayan.com/entry/2017/12/09/015937
     """
 
@@ -501,8 +508,6 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         Optional,
         List,
         Tuple,
-        Deque,
-        Set,
         overload,
     )
 
@@ -612,7 +617,7 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         """O(len(y) * len(x) + log wh)."""
         ...
 
-    def __getitem__(
+    def __getitem__(  # type: ignore
         self, yx: Union[Index, Tuple[Index, Index]]
     ) -> Union[V_, List[V_], List[List[V_]]]:
         from bisect import bisect_right
@@ -665,18 +670,27 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         """O(len(y) len(x) log h log w). Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:
+    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:  # type: ignore
         from bisect import bisect_right
-        from typing import Optional, Deque, Set
 
-        i: Optional[int]
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
         y, x = yx
+        j: Optional[int]
         if isinstance(y, int):
-            i = self.yi[y]
-            r = range(i, i + 1)
-            v = [v]
+            j = self.ysize - 1 + self.yi[y]
+            self.tree[j][x] = v
+            j = (j - 1) >> 1
+            while j >= 0:
+                if isinstance(x, slice):
+                    vls = self.tree[(j << 1) + 1][x]
+                    vrs = self.tree[(j << 1) + 2][x]
+                    self.tree[j][x] = [self.f(vl, vr) for vl, vr in zip(vls, vrs)]
+                else:
+                    vl = self.tree[(j << 1) + 1][x]
+                    vr = self.tree[(j << 1) + 2][x]
+                    self.tree[j][x] = self.f(vl, vr)
+                j = (j - 1) >> 1
         elif isinstance(y, slice):
             if y.step not in (None, 1):
                 raise ValueError("Requires that y.step == 1")
@@ -687,34 +701,31 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
             if j is None:
                 j = bisect_right(self.ys, y.stop - 1)
             r = range(i, j)
+            q = Deque[int]()
+            s: Set[int] = set()
+            for ri, vi in zip(r, v):
+                j = self.ysize - 1 + ri
+                self.tree[j][x] = vi
+                nj = (j - 1) >> 1
+                if nj >= 0 and nj not in s:
+                    q.append(nj)
+                    s.add(nj)
+            while q:
+                j = q.popleft()
+                if isinstance(x, slice):
+                    vls = self.tree[(j << 1) + 1][x]
+                    vrs = self.tree[(j << 1) + 2][x]
+                    self.tree[j][x] = [self.f(vl, vr) for vl, vr in zip(vls, vrs)]
+                else:
+                    vl = self.tree[(j << 1) + 1][x]
+                    vr = self.tree[(j << 1) + 2][x]
+                    self.tree[j][x] = self.f(vl, vr)
+                nj = (j - 1) >> 1
+                if nj >= 0 and nj not in s:
+                    q.append(nj)
+                    s.add(nj)
         else:
             raise TypeError
-
-        q = Deque[int]()
-        s: Set[int] = set()
-
-        for ri, vi in zip(r, v):
-            j = self.ysize - 1 + ri
-            self.tree[j][x] = vi
-            self._addnext(q, s, j)
-        while len(q):
-            j = q.popleft()
-            if isinstance(x, slice):
-                vls = self.tree[(j << 1) + 1][x]
-                vrs = self.tree[(j << 1) + 2][x]
-                self.tree[j][x] = [self.f(vl, vr) for vl, vr in zip(vls, vrs)]
-            else:
-                vl = self.tree[(j << 1) + 1][x]
-                vr = self.tree[(j << 1) + 2][x]
-                self.tree[j][x] = self.f(vl, vr)
-            self._addnext(q, s, j)
-
-    @staticmethod
-    def _addnext(q: Deque[int], s: Set[int], j: int):
-        k = (j - 1) >> 1
-        if k >= 0 and k not in s:
-            q.append(k)
-            s.add(k)
 
 
 class Segtree2DPrimalCompressInt(Segtree2DPrimalCompress[int]):
@@ -745,3 +756,66 @@ class Segtree2DPrimalCompressInt(Segtree2DPrimalCompress[int]):
         e: int = 0,
     ):
         super().__init__(yxs, f, e)
+
+
+# --------------------
+
+
+def solve_yosupojudge_point_add_range_sum():
+    """
+    Library Checker: Point Add Range Sum
+    https://judge.yosupo.jp/problem/point_add_range_sum
+    """
+    N, Q = map(int, input().split())
+    A = [int(v) for v in input().split()]
+    seg = SegtreePrimalInt(N)
+    seg[:] = A
+    ans = []
+    for _ in range(Q):
+        q, *args = map(int, input().split())
+        if q == 0:
+            p, x = args
+            seg[p] += x
+        elif q == 1:
+            l, r = args
+            ans.append(seg.grasp(l, r))
+        else:
+            raise RuntimeError
+    for a in ans:
+        print(a)
+
+
+def solve_yosupojudge_point_add_rectangle_sum():
+    """
+    TLE
+    Library Checker: Point Add Rectangle Sum
+    https://judge.yosupo.jp/problem/point_add_rectangle_sum
+    """
+    N, Q = map(int, input().split())
+    XYW = []
+    for _ in range(N):
+        x, y, w = map(int, input().split())
+        XYW.append((x, y, w))
+    yxs = set((y, x) for x, y, w in XYW)
+    queries = []
+    for _ in range(Q):
+        q, *args = map(int, input().split())
+        if q == 0:
+            x, y, w = args
+            yxs.add((y, x))
+        queries.append((q, args))
+    seg = Segtree2DPrimalCompressInt(yxs)
+    for x, y, w in XYW:
+        seg[y, x] += w
+    ans = []
+    for q, args in queries:
+        if q == 0:
+            x, y, w = args
+            seg[y, x] += w
+        elif q == 1:
+            l, d, r, u = args
+            ans.append(seg.grasp(d, l, u, r))
+        else:
+            raise RuntimeError
+    for a in ans:
+        print(a)
