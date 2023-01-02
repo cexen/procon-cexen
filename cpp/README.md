@@ -13,7 +13,7 @@ Open a Developer PowerShell of MSVC.
 
 ```pwsh
 cd ~/Downloads/boost_1_72_0
-./bootstrap
+./bootstrap vc142
 $num_threads = 1 + (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors  # OR SPECIFY WHAT YOU LIKE
-./b2 stage toolset=clang-win toolset=clang-win link=static threading=single variant=release runtime-link=static -j"$num_threads"
+./b2 stage toolset=clang-win link=static runtime-link=static threading=single variant=release address-model=64 -j"$num_threads"
 ```
