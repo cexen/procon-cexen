@@ -9,15 +9,22 @@
 				"${file}",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}.exe",
+				"-g3",
 				"-std=c++17",
 				"-Wall",
 				"-Wextra",
+				// "-Wconversion", // ng with ac-library
+				"-Wdouble-promotion",
+				"-Wpadded",
+				"-Wshadow",
 				"-Wshorten-64-to-32",
-				"-g",
-				"-Og",
-				"-fdiagnostics-color=always",
-				// "-fsanitize=undefined,address",
+				// "-Wundef", // ng with boost
+				"-Wno-deprecated-builtins", // for boost
+				"-Wno-unqualified-std-cast-call", // for ac-library
+				"-fansi-escape-codes",
+				"-fcolor-diagnostics",
 				"-fsanitize=undefined",
+				// "-fsanitize=undefined,address",
 				"-D_LIBCPP_DEBUG",
 				"-I",
 				"~/Downloads/boost_1_72_0",
@@ -43,15 +50,30 @@
 			"label": "clang++17 (Linux)",
 			"command": "/usr/bin/clang++",
 			"args": [
-				"-fdiagnostics-color=always",
-				"-g",
 				"${file}",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}",
+				"-g",
 				"-std=c++17",
 				"-Wall",
 				"-Wextra",
-				"-O2",
+				"-g3",
+				"-std=c++17",
+				"-Wall",
+				"-Wextra",
+				// "-Wconversion", // ng with ac-library
+				"-Wdouble-promotion",
+				"-Wpadded",
+				"-Wshadow",
+				"-Wshorten-64-to-32",
+				// "-Wundef", // ng with boost
+				"-Wno-deprecated-builtins", // for boost
+				"-Wno-unqualified-std-cast-call", // for ac-library
+				"-fansi-escape-codes",
+				"-fcolor-diagnostics",
+				"-fsanitize=undefined",
+				// "-fsanitize=undefined,address",
+				"-D_LIBCPP_DEBUG",
 				"-I/opt/ac-library"
 			],
 			"options": {
