@@ -295,6 +295,36 @@ def inv(a: int, mod: int):
     return ia % mod if d == 1 else None
 
 
+from math import ceil, sqrt
+from typing import Dict
+
+
+def discrete_log(a: int, b: int, m: int) -> int:
+    """
+    O(m**0.5). Baby-step giant-step.
+    Required: gcd(a, m) == 1.
+    Returns min x s.t. 0<=x<m and a**x=b mod m.
+    Returns -1 if nonexistent.
+    """
+    k = ceil(sqrt(m))
+    s: Dict[int, int] = {}
+    v = 1
+    for i in range(k):
+        if v not in s:
+            s[v] = i
+        v = v * a % m
+    iak = inv(v, m)
+    assert iak is not None, f"gcd(a, m) != 1"
+    v = 1
+    for i in range(k):
+        r = s.get(v * b % m, -1)
+        if r != -1:
+            return i * k + r
+        v = v * iak % m
+    r = s.get(v * b % m, -1)
+    return k * k + r if r != -1 else -1
+
+
 from typing import List, Tuple, Optional
 
 
