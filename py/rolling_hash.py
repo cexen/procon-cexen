@@ -6,13 +6,14 @@ class RollingHash:
     """
     mod: 61 bit Mersenne prime.
     v1.3 @cexen.
+    e.g.) hash([s0, s1, s2, s3]) == (s0 * b**3 + s1 * b**2 + s2 * b**1 + s3) % mod.
     cf. https://qiita.com/keymoon/items/11fac5627672a6d6a9f6
 
     You may generate a random base:
     >>> rh = RollingHash(base=RollingHash.generate_base(minval=26))
 
     >>> rh = RollingHash(base=37)
-    >>> rh.calc([1, 2, 3])
+    >>> rh.calc([1, 2, 3])  # [0, 1, 1*37+2, 1*(37**2)+2*37+3]
     [0, 1, 39, 1446]
     >>> rh.slice([0, 1, 39, 1446], 0, 3)  # [1, 2, 3]
     1446
