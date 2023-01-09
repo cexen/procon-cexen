@@ -290,9 +290,14 @@ def euclid(a: int, b: int):
     return p, q, a
 
 
-def inv(a: int, mod: int):
+def inv(a: int, mod: int) -> int:
+    """
+    Returns ia s.t. ia * a = 1 under mod.
+    Returns 0 if nonexistent (gcd(a, mod) != 1).
+    O(log min(a, mod)).
+    """
     ia, _, d = euclid(a, mod)  # ia * a + _ * mod = d
-    return ia % mod if d == 1 else None
+    return ia % mod if d == 1 else 0
 
 
 from math import ceil, sqrt
