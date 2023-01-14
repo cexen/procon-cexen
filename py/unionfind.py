@@ -67,3 +67,26 @@ class UnionFind:
             data[j] = i
             sizes[i] += sizes[j]
             # weights[i] += weights[j]
+
+
+def solve_yosupojudge_unionfind():
+    """
+    Library Checker: Unionfind
+    https://judge.yosupo.jp/problem/unionfind
+    """
+    N, Q = map(int, input().split())
+    dst = UnionFind(N)
+    ans = []
+    for _ in range(Q):
+        t, u, v = map(int, input().split())
+        if t == 0:
+            dst.unite(u, v)
+        elif t == 1:
+            ans.append(dst.connected(u, v))
+        else:
+            raise RuntimeError
+    for a in ans:
+        print(int(a))
+
+
+solve_yosupojudge_unionfind()
