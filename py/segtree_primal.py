@@ -8,7 +8,7 @@ V_ = TypeVar("V_")
 
 class SegtreePrimal(Sequence[V_]):
     """
-    v1.6 @cexen
+    v1.7 @cexen
     >>> st = SegtreePrimal[int](4, f=operator.add, e=0)
     >>> st[1:] = [4, 9, 16]
     >>> st[0] = -99
@@ -121,6 +121,23 @@ class SegtreePrimal(Sequence[V_]):
                     q.append(nj)
                     s.add(nj)
 
+    def _rebuild(self) -> None:
+        for j in reversed(range(self.size - 1)):
+            vl = self.tree[(j << 1) + 1]
+            vr = self.tree[(j << 1) + 2]
+            self.tree[j] = self.f(vl, vr)
+
+    def setall(self, values: Iterable[V_]) -> None:
+        """O(n). Faster than self[:] = values."""
+        j = -1
+        off = self.size - 1
+        for j, v in enumerate(values):
+            self.tree[off + j] = v
+        assert j + 1 == len(self)
+        for j in range(len(self), self.size):
+            self.tree[off + j] = self.e
+        self._rebuild()
+
 
 class SegtreePrimalInt(SegtreePrimal[int]):
     from typing import Callable
@@ -131,7 +148,7 @@ class SegtreePrimalInt(SegtreePrimal[int]):
 
 class Segtree2DPrimal(Sequence[Sequence[V_]]):
     """
-    v1.4 @cexen
+    v1.5 @cexen
     """
 
     from typing import Iterable, Callable, Union, Optional, List, Tuple, overload
@@ -342,6 +359,43 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
                 vrr = self.tree[(i << 1) + 2][(j << 1) + 2]
                 self.tree[i][j] = self.f(self.f(vll, vlr), self.f(vrl, vrr))
             addnext(q, s, i, j)
+
+    def _rebuild(self) -> None:
+        for i in reversed(range(self.sizey - 1, 2 * self.sizey - 1)):
+            for j in reversed(range(self.sizex - 1)):
+                vl = self.tree[i][(j << 1) + 1]
+                vr = self.tree[i][(j << 1) + 2]
+                self.tree[i][j] = self.f(vl, vr)
+        for i in reversed(range(self.sizey - 1)):
+            for j in reversed(range(self.sizex - 1, 2 * self.sizex - 1)):
+                vl = self.tree[(i << 1) + 1][j]
+                vr = self.tree[(i << 1) + 2][j]
+                self.tree[i][j] = self.f(vl, vr)
+            for j in reversed(range(self.sizex - 1)):
+                vll = self.tree[(i << 1) + 1][(j << 1) + 1]
+                vlr = self.tree[(i << 1) + 1][(j << 1) + 2]
+                vrl = self.tree[(i << 1) + 2][(j << 1) + 1]
+                vrr = self.tree[(i << 1) + 2][(j << 1) + 2]
+                self.tree[i][j] = self.f(self.f(vll, vlr), self.f(vrl, vrr))
+
+    def setall(self, values: Iterable[Iterable[V_]]) -> None:
+        """O(h*w). Faster than self[:, :] = values."""
+        i = -1
+        offy = self.sizey - 1
+        offx = self.sizex - 1
+        for i, row in enumerate(values):
+            j = -1
+            for j, v in enumerate(row):
+                self.tree[offy + i][offx + j] = v
+            assert j + 1 == len(self.rx)
+        assert i + 1 == len(self.ry)
+        for i in range(len(self.ry), self.sizey):
+            for j in range(self.sizex):
+                self.tree[offy + i][offx + j] = self.e
+        for i in range(self.sizey):
+            for j in range(len(self.rx), self.sizex):
+                self.tree[offy + i][offx + j] = self.e
+        self._rebuild()
 
 
 class Segtree2DPrimalInt(Segtree2DPrimal[int]):
@@ -769,7 +823,7 @@ def solve_yosupojudge_point_add_range_sum():
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
     seg = SegtreePrimalInt(N)
-    seg[:] = A
+    seg.setall(A)
     ans = []
     for _ in range(Q):
         q, *args = map(int, input().split())
