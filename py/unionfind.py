@@ -1,6 +1,4 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/unionfind.py
-
-
 class UnionFind:
     """
     v1.1 @cexen
@@ -69,6 +67,9 @@ class UnionFind:
             # weights[i] += weights[j]
 
 
+# --------------------
+
+
 def solve_yosupojudge_unionfind():
     """
     Library Checker: Unionfind
@@ -87,6 +88,3 @@ def solve_yosupojudge_unionfind():
             raise RuntimeError
     for a in ans:
         print(int(a))
-
-
-solve_yosupojudge_unionfind()
