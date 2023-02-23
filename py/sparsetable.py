@@ -1,12 +1,22 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/sparsetable.py
-from typing import TypeVar, Callable, Sequence, Optional, Union, List, overload
+from typing import (
+    TypeVar,
+    Callable,
+    Iterable,
+    Optional,
+    Union,
+    Sequence,
+    Tuple,
+    List,
+    overload,
+)
 
 T_ = TypeVar("T_")
 
 
 class SparseTable(Sequence[T_]):
     """
-    v1.0 @cexen.
+    v1.1 @cexen.
     Works for associative & idenpotent f(x, y).
     cf. https://atcoder.jp/contests/abc282/editorial/5403
     cf. https://ikatakos.com/pot/programming_algorithm/data_structure/sparse_table
@@ -24,7 +34,7 @@ class SparseTable(Sequence[T_]):
     5
     """
 
-    def __init__(self, data: Sequence[T_], f: Callable[[T_, T_], T_]):
+    def __init__(self, data: Iterable[T_], f: Callable[[T_, T_], T_]):
         """
         O(n log n).
         Required: f(f(x, y), z) == f(x, f(y, z)).
@@ -75,7 +85,7 @@ from itertools import accumulate
 
 class SparseTableDisjoint(Sequence[T_]):
     """
-    v1.0 @cexen.
+    v1.1 @cexen.
     Works for associative f(x, y).
     cf. https://noshi91.hatenablog.com/entry/2018/05/08/183946
 
@@ -93,7 +103,7 @@ class SparseTableDisjoint(Sequence[T_]):
     5
     """
 
-    def __init__(self, data: Sequence[T_], f: Callable[[T_, T_], T_]):
+    def __init__(self, data: Iterable[T_], f: Callable[[T_, T_], T_]):
         """
         O(n log n).
         Required: f(f(x, y), z) == f(x, f(y, z)).
@@ -143,6 +153,134 @@ class SparseTableDisjoint(Sequence[T_]):
             return self.table[0][i]
         row = self.table[b - 1]
         return self.f(row[i], row[j])
+
+
+class SparseTable2D(Sequence[Sequence[T_]]):
+    """
+    v1.1 @cexen.
+    Works for associative & idenpotent f(x, y).
+
+    >>> st = SparseTable2D([[1, 2], [3, 4]], f=min)
+    >>> len(st)
+    2
+    >>> st.size
+    4
+    >>> st[1, 1]
+    4
+    >>> st[:]
+    [[1, 2], [3, 4]]
+    >>> st.grasp()  # min(1, 2, 3, 4)
+    1
+    >>> st.grasp(0, 1)  # min(1, 2)
+    1
+    >>> st.grasp(1, 2, 0, 1)  # min(3)
+    3
+    """
+
+    def __init__(self, data: Iterable[Iterable[T_]], f: Callable[[T_, T_], T_]):
+        """
+        O(hw log hw).
+        Required: f(f(x, y), z) == f(x, f(y, z)).
+        Required: f(x, x) == x.
+        """
+        self.table = [[[list(row) for row in data]]]
+        self.h = len(self.table[0][0])
+        self.w = len(self.table[0][0][0])
+        self.f = f
+        for bi in range(self.h.bit_length() - 1):
+            h = 1 << bi
+            pdat = self.table[bi][0]
+            dat = [
+                [f(pdat[i][j], pdat[i + h][j]) for j in range(self.w)]
+                for i in range(self.h + 1 - (h << 1))
+            ]
+            self.table.append([dat])
+        for bi in range(self.h.bit_length()):
+            h = 1 << bi
+            tabi = self.table[bi]
+            for bj in range(self.w.bit_length() - 1):
+                w = 1 << bj
+                pdat = tabi[bj]
+                dat = [
+                    [
+                        f(pdat[i][j], pdat[i][j + w])
+                        for j in range(self.w + 1 - (w << 1))
+                    ]
+                    for i in range(self.h + 1 - h)
+                ]
+                tabi.append(dat)
+
+    def __len__(self):
+        return self.h
+
+    @property
+    def size(self) -> int:
+        return self.h * self.w
+
+    @overload
+    def __getitem__(self, s: Tuple[int, int]) -> T_:
+        """O(1)."""
+        ...
+
+    @overload
+    def __getitem__(self, s: int) -> List[T_]:
+        """O(w)."""
+        ...
+
+    @overload
+    def __getitem__(self, s: Tuple[int, slice]) -> List[T_]:
+        """O(len(j))."""
+        ...
+
+    @overload
+    def __getitem__(self, s: Tuple[slice, int]) -> List[T_]:
+        """O(len(i))."""
+        ...
+
+    @overload
+    def __getitem__(self, s: slice) -> List[List[T_]]:
+        """O(len(i) * w)."""
+        ...
+
+    @overload
+    def __getitem__(self, s: Tuple[slice, slice]) -> List[List[T_]]:
+        """O(len(i) * len(j))."""
+        ...
+
+    def __getitem__(self, s):
+        if not isinstance(s, tuple):
+            s = (s, slice(None))
+        i, j = s
+        if isinstance(i, slice):
+            return [self[ii, j] for ii in range(self.h)[i]]
+        if isinstance(j, slice):
+            return [self[i, jj] for jj in range(self.w)[j]]
+        return self.table[0][0][i][j]
+
+    def grasp(
+        self,
+        il: int = 0,
+        ir: Optional[int] = None,
+        jl: int = 0,
+        jr: Optional[int] = None,
+    ) -> T_:
+        """O(1). 0 <= i < j <= n. Take care that i != j."""
+        if ir is None:
+            ir = self.h
+        if jr is None:
+            jr = self.w
+        # l < r because we don't know identity of f
+        assert 0 <= il < ir <= self.h
+        assert 0 <= jl < jr <= self.w
+        bi = (ir - il).bit_length() - 1
+        bj = (jr - jl).bit_length() - 1
+        h = 1 << bi
+        w = 1 << bj
+        dat = self.table[bi][bj]
+        return self.f(
+            self.f(dat[il][jl], dat[il][jr - w]),
+            self.f(dat[ir - h][jl], dat[ir - h][jr - w]),
+        )
 
 
 # --------------------
