@@ -343,7 +343,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.10 @cexen.
+    v1.11 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -677,23 +677,23 @@ class WaveletMatrix(Sequence[int]):
         """
         return self.rangelist(i, j, k=k)
 
-    def prevvalue(self, i: int, j: int, x: int, y: int) -> Optional[Tuple[int, int]]:
+    def prevvalue(self, i: int, j: int, x: int, y: int) -> Tuple[int, int]:
         """
         O(bitlen).
         Returns (v, self[i:j].count(v)) where v = max(v for v in self[i:j] if x <= v < y).
-        Returns None if not found.
+        Returns (x-1, 0) if not found.
         """
         ans = self.rangelist(i, j, x, y, k=1, reverse=True)
-        return ans[0] if len(ans) else None
+        return ans[0] if len(ans) else (x - 1, 0)
 
-    def nextvalue(self, i: int, j: int, x: int, y: int) -> Optional[Tuple[int, int]]:
+    def nextvalue(self, i: int, j: int, x: int, y: int) -> Tuple[int, int]:
         """
         O(bitlen).
         Returns (v, self[i:j].count(v)) where v = min(v for v in self[i:j] if x <= v < y).
-        Returns None if not found.
+        Returns (y, 0) if not found.
         """
         ans = self.rangelist(i, j, x, y, k=1)
-        return ans[0] if len(ans) else None
+        return ans[0] if len(ans) else (y, 0)
 
     def intersect(
         self, i1: int, j1: int, i2: int, j2: int
