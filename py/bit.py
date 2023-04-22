@@ -1,14 +1,12 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/bit.py
 import operator
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Callable, Optional
 
 T = TypeVar("T")
 
 
 class BIT(Generic[T]):
     """v1.3 @cexen"""
-
-    from typing import Callable, Optional
 
     def __init__(
         self, n: int, f: Callable[[T, T], T], e: T, increasing: Optional[bool] = None
@@ -127,8 +125,6 @@ class BITInt(BIT[int]):
     (2, 2)
     """
 
-    from typing import Callable, Optional
-
     def __init__(
         self,
         n: int,
@@ -140,8 +136,6 @@ class BITInt(BIT[int]):
 
 
 class BITFloat(BIT[float]):
-    from typing import Callable, Optional
-
     def __init__(
         self,
         n: int,

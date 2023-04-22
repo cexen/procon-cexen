@@ -1,6 +1,6 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/segtree_lazy.py
 import operator
-from typing import TypeVar, Generic, Iterable, List
+from typing import TypeVar, Generic, Callable, Iterable, Union, Optional, List, overload
 
 V_ = TypeVar("V_")
 X_ = TypeVar("X_")
@@ -39,8 +39,6 @@ class SegtreeLazy(Generic[V_, X_]):
     >>> st[:]
     [1000, 1101, 1102, 5, 4, 103]
     """
-
-    from typing import Iterable, Callable, Union, Optional, List, overload
 
     def __init__(
         self,
@@ -209,9 +207,6 @@ class SegtreeLazy(Generic[V_, X_]):
 
 
 class SegtreeLazyInt(SegtreeLazy[int, int]):
-
-    from typing import Iterable, Callable
-
     def __init__(
         self,
         iterable: Iterable[int],
@@ -302,7 +297,7 @@ class SegtreeLazyInt(SegtreeLazy[int, int]):
 # --------------------
 
 
-def solve_yosupojudge_setitem_grasp():
+def solve_yosupojudge_setitem_grasp() -> None:
     """
     Point Set Range Composite
     https://judge.yosupo.jp/problem/point_set_range_composite
@@ -346,7 +341,7 @@ def solve_yosupojudge_setitem_grasp():
         print(a)
 
 
-def solve_yosupojudge_getitem_setitem_grasp():
+def solve_yosupojudge_getitem_setitem_grasp() -> None:
     """
     Point Add Range Sum
     https://judge.yosupo.jp/problem/point_add_range_sum
@@ -367,7 +362,7 @@ def solve_yosupojudge_getitem_setitem_grasp():
         print(a)
 
 
-def solve_yosupojudge_operate_grasp():
+def solve_yosupojudge_operate_grasp() -> None:
     """
     TLE
     Range Affine Range Sum
