@@ -343,7 +343,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.9 @cexen.
+    v1.10 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -497,7 +497,7 @@ class WaveletMatrix(Sequence[int]):
         assert 0 <= v
         v = min(v, self.inf)
         assert 0 <= k
-        k += self._lsbindex(v, 0)
+        k += self._lsbindex(0, v)
         for ib in reversed(range(self.bitlen)):
             nib = self.bitlen - 1 - ib
             bv, num0 = self.matrix[ib], self.num0s[ib]
@@ -649,7 +649,7 @@ class WaveletMatrix(Sequence[int]):
             if l1 < r1 and (lty or y_is_1):
                 l1 += num0
                 r1 += num0
-                nq.append((v + 1 << nib, ib + 1, l1, r1, gtx | x_is_0, lty))
+                nq.append((v + (1 << nib), ib + 1, l1, r1, gtx | x_is_0, lty))
             if l0 < r0 and (gtx or x_is_0):
                 nq.append((v, ib + 1, l0, r0, gtx, lty | y_is_1))
             if reverse:
