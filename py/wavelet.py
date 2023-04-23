@@ -343,7 +343,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.11 @cexen.
+    v1.12 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -357,9 +357,9 @@ class WaveletMatrix(Sequence[int]):
     4
     >>> wm[:]
     [3, 1, 4, 1, 5, 9, 2]
-    >>> [wm.rank(1, 0, j) for j in range(1 + len(wm))]
+    >>> [wm.rank(0, j, 1) for j in range(1 + len(wm))]
     [0, 0, 1, 1, 2, 2, 2, 2]
-    >>> [wm.rank(7, 0, j) for j in range(1 + len(wm))]
+    >>> [wm.rank(0, j, 7) for j in range(1 + len(wm))]
     [0, 0, 0, 0, 0, 0, 0, 0]
     >>> [wm.select(1, k) for k in range(len(wm))]
     [1, 3, 7, 7, 7, 7, 7]
@@ -382,9 +382,9 @@ class WaveletMatrix(Sequence[int]):
     >>> [wm.rangemink(1, 5, k) for k in range(5)]
     [[], [(1, 2)], [(1, 2), (4, 1)], [(1, 2), (4, 1), (5, 1)], [(1, 2), (4, 1), (5, 1)]]
     >>> [wm.prevvalue(1, 5, k, 5) for k in range(6)]
-    [(4, 1), (4, 1), (4, 1), (4, 1), (4, 1), None]
+    [(4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 0)]
     >>> [wm.nextvalue(1, 5, k, 5) for k in range(6)]
-    [(1, 2), (1, 2), (4, 1), (4, 1), (4, 1), None]
+    [(1, 2), (1, 2), (4, 1), (4, 1), (4, 1), (5, 0)]
     >>> wm.intersect(0, 5, 2, 6)
     [(1, 2, 1), (4, 1, 1), (5, 1, 1)]
     """
