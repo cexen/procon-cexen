@@ -8,16 +8,26 @@ V_ = TypeVar("V_")
 
 class SegtreePrimal(Sequence[V_]):
     """
-    v1.7 @cexen
+    v1.9 @cexen
     >>> st = SegtreePrimal[int](4, f=operator.add, e=0)
     >>> st[1:] = [4, 9, 16]
-    >>> st[0] = -99
+    >>> st[0] = -1
     >>> st[-1]
     16
     >>> st[:]
-    [-99, 4, 9, 16]
+    [-1, 4, 9, 16]
     >>> st.grasp(1, 3)
     13
+    >>> st.grasp()
+    28
+    >>> st.max_right(lambda v: v < 28, l=0)
+    3
+    >>> st.max_right(lambda v: v <= 28, l=0)
+    4
+    >>> st.min_left(lambda v: v < 25)
+    3
+    >>> st.min_left(lambda v: v <= 25)
+    2
     """
 
     from typing import Iterable, Callable, Union, Optional, List, Deque, Set, overload
@@ -137,6 +147,64 @@ class SegtreePrimal(Sequence[V_]):
         for j in range(len(self), self.size):
             self.tree[off + j] = self.e
         self._rebuild()
+
+    def max_right(self, g: Callable[[V_], bool], l: int = 0) -> int:
+        """
+        O(log n). Returns one r s.t. l <= r <= n and g(grasp(l, r)) and not g(grasp(l, r+1)).
+        g(e) is not calculated but assumed to be True.
+        cf. https://github.com/atcoder/ac-library/blob/master/atcoder/segtree.hpp
+        """
+        assert 0 <= l <= len(self)
+        if l == len(self):
+            return len(self)
+        r = l + self.size  # 1-indexed, exclusive
+        v = self.e
+        while True:
+            while not r & 1:
+                r >>= 1
+            nv = self.f(v, self.tree[r - 1])
+            if not g(nv):
+                while r < self.size:
+                    r <<= 1
+                    nv = self.f(v, self.tree[r - 1])
+                    if g(nv):
+                        v = nv
+                        r |= 1
+                return r - self.size  # 0-indexed, exclusive
+            v = nv
+            r |= 1
+            if (r & -r) == r:
+                return len(self)
+
+    def min_left(self, g: Callable[[V_], bool], r: Optional[int] = None):
+        """
+        O(log n). Returns one l s.t. 0 <= l <= r and g(grasp(l, r)) and not g(grasp(l-1, r)).
+        g(e) is not calculated but assumed to be True.
+        cf. https://github.com/atcoder/ac-library/blob/master/atcoder/segtree.hpp
+        """
+        if r is None:
+            r = len(self)
+        assert 0 <= r <= len(self)
+        if r == 0:
+            return 0
+        l = r + self.size - 1  # 1-indexed, exclusive
+        v = self.e
+        while True:
+            while l & 1 and l > 1:
+                l >>= 1
+            nv = self.f(self.tree[l - 1], v)
+            if not g(nv):
+                while l < self.size:
+                    l = (l << 1) | 1
+                    nv = self.f(self.tree[l - 1], v)
+                    if g(nv):
+                        v = nv
+                        l ^= 1
+                return l - self.size + 1  # 0-indexed, inclusive
+            if l & (-l) == l:
+                return 0
+            v = nv
+            l -= 1
 
 
 class SegtreePrimalInt(SegtreePrimal[int]):
@@ -873,3 +941,99 @@ def solve_yosupojudge_point_add_rectangle_sum():
             raise RuntimeError
     for a in ans:
         print(a)
+
+
+def solve_atcoder_practice2_j():
+    """
+    AtCoder Library Practice Contest: J - Segment Tree
+    https://atcoder.jp/contests/practice2/tasks/practice2_j
+    """
+    N, Q = map(int, input().split())
+    A = [int(v) for v in input().split()]
+    seg = SegtreePrimalInt(N, max, -(10**9))
+    seg.setall(A)
+    anses = []
+    for _ in range(Q):
+        t, *args = map(int, input().split())
+        if t == 1:
+            x, v = args
+            seg[x - 1] = v
+        elif t == 2:
+            l, r = args
+            anses.append(seg.grasp(l - 1, r))
+        elif t == 3:
+            x, v = args
+            anses.append(1 + seg.max_right(lambda m: m < v, l=x - 1))
+        else:
+            raise RuntimeError
+    for ans in anses:
+        print(ans)
+
+
+def solve_atcoder_abc287_g():
+    """
+    AtCoder Beginner Contest 287: G - Balance Update Query
+    https://atcoder.jp/contests/abc287/tasks/abc287_g
+    """
+    from typing import Tuple, List
+
+    N = int(input())
+    A: List[int] = []
+    B: List[int] = []
+    for _ in range(N):
+        a, b = map(int, input().split())
+        A.append(a)
+        B.append(b)
+    S = A.copy()
+    Q = int(input())
+    qs: List[Tuple[int, List[int]]] = []
+    for _ in range(Q):
+        p, *args = map(int, input().split())
+        if p == 1:
+            x, y = args
+            S.append(y)
+        qs.append((p, args))
+    S = sorted(set(S))
+    d = {v: i for i, v in enumerate(S)}
+    V = Tuple[int, int]
+
+    def f(x: V, y: V) -> V:
+        return (x[0] + y[0], x[1] + y[1])
+
+    seg = SegtreePrimal[V](len(d), f, (0, 0))
+    for a, b in zip(A, B):
+        ia = d[a]
+        k, s = seg[ia]
+        seg[ia] = (k + b, s + a * b)
+    anses: List[int] = []
+    for p, args in qs:
+        if p == 1:
+            x, y = args
+            a = A[x - 1]
+            A[x - 1] = na = y
+            b = B[x - 1]
+            ia = d[a]
+            ina = d[na]
+            k, s = seg[ia]
+            seg[ia] = (k - b, s - a * b)
+            k, s = seg[ina]
+            seg[ina] = (k + b, s + na * b)
+        elif p == 2:
+            x, y = args
+            b = B[x - 1]
+            B[x - 1] = nb = y
+            a = A[x - 1]
+            ia = d[a]
+            k, s = seg[ia]
+            seg[ia] = (k + nb - b, s + a * (nb - b))
+        elif p == 3:
+            (x,) = args
+            l = seg.min_left(lambda v: v[0] < x)
+            if l == 0:
+                anses.append(-1)
+            else:
+                k, s = seg.grasp(l, len(seg))
+                anses.append((x - k) * S[l - 1] + s)
+        else:
+            raise RuntimeError
+    print(*anses, sep="\n")
