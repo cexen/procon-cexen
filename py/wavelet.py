@@ -22,7 +22,7 @@ def popcount(n: int) -> int:
     return s
 
 
-from typing import Sequence
+from typing import Sequence, Iterable, Optional, Union, Tuple, List, overload
 
 
 class UnsuccinctBV(Sequence[int]):
@@ -72,8 +72,6 @@ class UnsuccinctBV(Sequence[int]):
     >>> bv2.select0(4999), bv2.select0(5000), bv2.select0(10**9)
     (4999, 5001, 10001)
     """
-
-    from typing import Iterable, Union, Tuple, List, overload
 
     def __init__(self, bits: Iterable[int]):
         """O(len(bits))."""
@@ -208,8 +206,6 @@ class SuccinctBV(Sequence[int]):
     # Note: len(P) is O(sqrt(n)).
     P = [0, 1, 1, 2, 1, 2, 2, 3]
 
-    from typing import Iterable, Union, Tuple, List, overload
-
     def __init__(self, bits: Iterable[int]):
         """O(len(bits))."""
         bits_ = list(bits)
@@ -343,7 +339,7 @@ class SuccinctBV(Sequence[int]):
 
 class WaveletMatrix(Sequence[int]):
     """
-    v1.12 @cexen.
+    v1.13 @cexen.
     cf.
     https://miti-7.hatenablog.com/entry/2018/04/28/152259
     https://miti-7.hatenablog.com/entry/2019/02/01/152131
@@ -382,22 +378,18 @@ class WaveletMatrix(Sequence[int]):
     >>> [wm.rangemink(1, 5, k) for k in range(5)]
     [[], [(1, 2)], [(1, 2), (4, 1)], [(1, 2), (4, 1), (5, 1)], [(1, 2), (4, 1), (5, 1)]]
     >>> [wm.prevvalue(1, 5, k, 5) for k in range(6)]
-    [(4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (4, 0)]
+    [(4, 1), (4, 1), (4, 1), (4, 1), (4, 1), (5, 0)]
     >>> [wm.nextvalue(1, 5, k, 5) for k in range(6)]
     [(1, 2), (1, 2), (4, 1), (4, 1), (4, 1), (5, 0)]
     >>> wm.intersect(0, 5, 2, 6)
     [(1, 2, 1), (4, 1, 1), (5, 1, 1)]
     """
 
-    from typing import Iterable, Optional, List, Tuple, Union, overload
-
     def __init__(self, iterable: Iterable[int], bitlen: Optional[int] = None):
         """
         O(n * bitlen) where n == len(iterable).
         If bitlen omitted: bitlen = (1 + max(iterable)).bit_length().
         """
-        from typing import List, Dict
-
         tab = list(iterable)
         assert min(tab, default=0) >= 0
         if bitlen is None:
@@ -681,10 +673,10 @@ class WaveletMatrix(Sequence[int]):
         """
         O(bitlen).
         Returns (v, self[i:j].count(v)) where v = max(v for v in self[i:j] if x <= v < y).
-        Returns (x-1, 0) if not found.
+        Returns (y, 0) if not found.
         """
         ans = self.rangelist(i, j, x, y, k=1, reverse=True)
-        return ans[0] if len(ans) else (x - 1, 0)
+        return ans[0] if len(ans) else (y, 0)
 
     def nextvalue(self, i: int, j: int, x: int, y: int) -> Tuple[int, int]:
         """
@@ -700,7 +692,7 @@ class WaveletMatrix(Sequence[int]):
     ) -> List[Tuple[int, int, int]]:
         """
         O(bitlen + j1-i1 + j2-i2).
-        Returns [(v, l1.count(v), l2.count(v)) for v in sorted(set(l1) & set(l2))].
+        Returns [(v, l1.count(v), l2.count(v)) for v in sorted(set(l1) & set(l2))],
         where l1, l2 = self[i1:j1], self[i2:j2].
         (value, count1, count2) ORDER BY value ASC.
         """
