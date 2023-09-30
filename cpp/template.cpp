@@ -1,6 +1,7 @@
 // https://github.com/cexen/procon-cexen/blob/main/cpp/template.cpp
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <bitset>
 #include <chrono>
 #include <deque>
@@ -100,73 +101,6 @@ constexpr u64 powi(const i64 base, const u64 exp, const u32 mod) noexcept
     while (y > 0)
         (y & 1) && (ans = ans * x % mod), (x = x * x % mod), (y >>= 1);
     return ans;
-}
-constexpr u32 bit_width(i64 x) noexcept
-{
-    // https://qiita.com/carnage/items/d1fd54207b45e8150175
-    // https://naoyat.hatenablog.jp/entry/2014/05/12/143650
-#if (defined(__clang__) || defined(__GNUC__))
-    return (x == 0) ? 0 : (u32)sizeof(i64) * 8 - __builtin_clzll((x < 0) ? -x : x);
-#else
-    x = (x < 0) ? -x : x;
-    u32 ans = 0;
-    for (; x != 0; ++ans)
-        x >>= 1;
-    return ans;
-#endif
-}
-constexpr u32 bit_width(i32 x) noexcept
-{
-#if (defined(__clang__) || defined(__GNUC__))
-    return (x == 0) ? 0 : (u32)sizeof(i32) * 8 - __builtin_clz((x < 0) ? -x : x);
-#else
-    return bit_length((i64)x);
-#endif
-}
-constexpr u32 popcount(i64 x) noexcept
-{
-    // https://naoyat.hatenablog.jp/entry/2014/05/12/143650
-    // https://nixeneko.hatenablog.com/entry/2018/03/04/000000
-#if (defined(__clang__) || defined(__GNUC__))
-    return __builtin_popcountll(x);
-#else
-    x = (x & 0x5555555555555555) + ((x >> 1) & 0x5555555555555555);
-    x = (x & 0x3333333333333333) + ((x >> 2) & 0x3333333333333333);
-    x = (x & 0x0F0F0F0F0F0F0F0F) + ((x >> 4) & 0x0F0F0F0F0F0F0F0F);
-    x = (x & 0x00FF00FF00FF00FF) + ((x >> 8) & 0x00FF00FF00FF00FF);
-    x = (x & 0x0000FFFF0000FFFF) + ((x >> 16) & 0x0000FFFF0000FFFF);
-    x = (x & 0x00000000FFFFFFFF) + ((x >> 32) & 0x00000000FFFFFFFF);
-    return x
-#endif
-}
-constexpr u32 popcount(i32 x) noexcept
-{
-#if (defined(__clang__) || defined(__GNUC__))
-    return __builtin_popcount(x);
-#else
-    x = (x & 0x55555555) + ((x >> 1) & 0x55555555);
-    x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
-    x = (x & 0x0F0F0F0F) + ((x >> 4) & 0x0F0F0F0F);
-    x = (x & 0x00FF00FF) + ((x >> 8) & 0x00FF00FF);
-    x = (x & 0x0000FFFF) + ((x >> 16) & 0x0000FFFF);
-    return x
-#endif
-}
-constexpr u32 countr_zero(i64 x) noexcept
-{
-#if (defined(__clang__) || defined(__GNUC__))
-    return (x == 0) ? (u32)sizeof(i64) * 8 : __builtin_ctzll(x);
-#else
-    return (x == 0) ? (u32)sizeof(i64) * 8 : bit_width(x & (-x)) - 1;
-#endif
-}
-constexpr u32 countr_zero(i32 x) noexcept
-{
-#if (defined(__clang__) || defined(__GNUC__))
-    return (x == 0) ? (u32)sizeof(i32) * 8 : __builtin_ctz(x);
-#else
-    return (x == 0) ? (u32)sizeof(i32) * 8 : bit_width(x & (-x)) - 1;
-#endif
 }
 template <class T>
 T input()

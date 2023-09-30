@@ -3,6 +3,50 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
+			"label": "clang++23 (Windows)",
+			"command": "C:/Program Files/LLVM/bin/clang++.exe",
+			"args": [
+				"${file}",
+				"-o",
+				"${fileDirname}/${fileBasenameNoExtension}.exe",
+				"-g3",
+				"-std=c++23",
+				"-Wall",
+				"-Wextra",
+				// "-Wconversion", // ng with ac-library
+				"-Wdouble-promotion",
+				"-Wpadded",
+				"-Wshadow",
+				"-Wshorten-64-to-32",
+				// "-Wundef", // ng with boost
+				"-Wno-deprecated-builtins", // for boost
+				"-Wno-unqualified-std-cast-call", // for ac-library
+				"-fansi-escape-codes",
+				"-fcolor-diagnostics",
+				"-fsanitize=undefined",
+				// "-fsanitize=undefined,address",
+				"-D_LIBCPP_DEBUG",
+				"-I",
+				"~/Downloads/boost_1_83_0",
+				"-L",
+				"~/Downloads/boost_1_83_0/stage/lib",
+				"-I",
+				"~/Downloads/ac-library"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"detail": "For AtCoder: clang++",
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "cppbuild",
 			"label": "clang++17 (Windows)",
 			"command": "C:/Program Files/LLVM/bin/clang++.exe",
 			"args": [
@@ -42,7 +86,6 @@
 			],
 			"group": {
 				"kind": "build",
-				"isDefault": true
 			},
 		},
 		{
