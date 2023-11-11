@@ -55,22 +55,33 @@ def popcount2(n: int) -> int:
     return s
 
 
-def generate_primes(n: int):
+def generate_primes(n: int) -> list[int]:
     """
-    Returns list of primes <= n.
+    O(sqrt(n)). Returns list of primes <= n.
+    cf. https://strangerxxx.hateblo.jp/entry/20210514/1620925766
+    cf. https://strangerxxx.hateblo.jp/entry/20230227/1677491214
     >>> generate_primes(11)
     [2, 3, 5, 7, 11]
     """
-    from math import sqrt
-
-    isprime = [True] * n
-    isprime[0] = False
-    for i in range(2, 1 + round(sqrt(n))):
-        if not isprime[i - 1]:
+    if n <= 1:
+        return []
+    m = (n + 1) // 2
+    isprime = [1] * m
+    isprime[0] = 0
+    for i in range(1, m):
+        k = 2 * i + 1
+        if k * k > n:
+            break
+        if not isprime[i]:
             continue
-        for j in range(2, 1 + n // i):
-            isprime[i * j - 1] = False
-    p = [i + 1 for i, v in enumerate(isprime) if v]
+        for j in range(i, m):
+            ni = 2 * i * j + i + j
+            # assert 2 * ni + 1 == k * (2 * j + 1)
+            if ni >= m:
+                break
+            isprime[ni] = 0
+    p = [2]
+    p.extend(2 * i + 1 for i in range(m) if isprime[i])
     return p
 
 
@@ -426,6 +437,30 @@ def crt_garner(rs: List[int], ms: List[int]) -> Tuple[int, Optional[int]]:
 # --------------------
 
 
+def solve_yosupojudge_counting_primes():
+    """
+    RE or MLE for max_*.
+    Library Checker: Counting Primes
+    https://judge.yosupo.jp/problem/counting_primes
+    """
+    N = int(input())
+    primes = generate_primes(N)
+    print(len(primes))
+
+
+def solve_yosupojudge_enumerate_primes():
+    """
+    RE or MLE for 499477801_00, 499999993_00, and max_*.
+    Library Checker: Enumerate Primes
+    https://judge.yosupo.jp/problem/enumerate_primes
+    """
+    N, A, B = map(int, input().split())
+    primes = generate_primes(N)
+    ans = primes[B::A]
+    print(len(primes), len(ans))
+    print(*ans)
+
+
 def solve_yosupojudge_discrete_logarithm_mod():
     """
     Library Checker: Discrete Logarithm
@@ -439,3 +474,6 @@ def solve_yosupojudge_discrete_logarithm_mod():
         anses.append(ans)
     for ans in anses:
         print(ans)
+
+
+solve_yosupojudge_enumerate_primes()
