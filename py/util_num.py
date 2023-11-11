@@ -113,6 +113,27 @@ def fact(n: int):
     return primes
 
 
+def list_divisors(n: int) -> list[int]:
+    """
+    O(sqrt(n)).
+    cf. https://algo-logic.info/divisor/
+    >>> list_divisors(60)
+    [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]
+    """
+    assert n > 0
+    divs1 = list[int]()
+    divs2 = list[int]()
+    for d in range(1, n + 1):
+        if d * d > n:
+            break
+        if not n % d:
+            divs1.append(d)
+            if d * d != n:
+                divs2.append(n // d)
+    divs1.extend(reversed(divs2))
+    return divs1
+
+
 def list_factors_eratosthenes(n: int):
     """
     O(n log log n). Returns factors of [0, n].
