@@ -26,10 +26,8 @@ class Mod:
 
     KNOWN_PRIMES = {998244353, 1000000007, 1000000009}
 
-    from typing import Optional
-
     def __init__(
-        self, mod: int = 998244353, nmax: int = 1, is_prime: Optional[bool] = None
+        self, mod: int = 998244353, nmax: int = 1, is_prime: bool | None = None
     ):
         """O(nmax)."""
         self.mod = mod
@@ -94,7 +92,7 @@ class Mod:
     def inv(self, v: int) -> int:
         """O(log v). mod must be a prime!"""
         assert self.is_prime
-        return pow(v, self.mod - 2, self.mod)
+        return pow(v, -1, self.mod)
 
     def add(self, a: int, b: int) -> int:
         return (a + b) % self.mod
