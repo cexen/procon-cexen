@@ -19,3 +19,5 @@ cd ~/Downloads/boost_1_83_0
 $num_threads = 1 + (Get-CimInstance -ClassName Win32_Processor).NumberOfLogicalProcessors  # OR SPECIFY WHAT YOU LIKE
 ./b2 stage toolset=clang-win link=static runtime-link=static threading=single variant=release address-model=64 -j"$num_threads"
 ```
+
+Note: "Beta: Use Unicode UTF-8 for worldwide language support" must be OFF for `./b2 stage` to run properly (or otherwise it would throw an error of "No 'bootstrap.jam' was found by searching for: ...").
