@@ -247,6 +247,27 @@ def list_divisors_from_list(x: int, factors: Iterable[int]) -> list[int]:
     return q
 
 
+from collections import Counter
+from collections.abc import Iterable
+
+
+def lcmmod(*x: int, mod: int) -> int:
+    """
+    Returns lcm(*x) % mod.
+    O(sum(sqrt(xi))).
+    cf. https://blog.hamayanhamayan.com/entry/2017/05/21/001646
+    """
+    c = Counter[int]()
+    for xi in x:
+        cc = Counter(fact(xi))
+        for k, v in cc.items():
+            c[k] = max(c[k], v)
+    ans = 1
+    for k, v in c.items():
+        ans = ans * pow(k, v, mod) % mod
+    return ans
+
+
 def floorlog2(n: int) -> int:
     if not n > 0:
         raise ValueError
@@ -445,8 +466,68 @@ def crt_naive(rs: Sequence[int], ms: Sequence[int]) -> tuple[int | None, int | N
     return r % m, m
 
 
-def crt_garner(rs: List[int], ms: List[int]) -> Tuple[int, Optional[int]]:
-    raise NotImplementedError
+from collections.abc import Sequence
+from math import gcd
+
+
+def crt_garner(rs: Sequence[int], ms: Sequence[int], mod: int) -> int | None:
+    """
+    Returns r % mod of x = r (mod lcm(ms)) s.t. x = ri (mod mi).
+    Returns None if there is no solution.
+    0 <= r < min(mod, lcm(ms)) or r is None.
+    O(n**2 + n (sum(log mi)+log mod)) where n = len(rs).
+    cf.
+    https://qiita.com/drken/items/ae02240cd1f8edfc86fd
+    https://math314.hateblo.jp/entry/2015/05/07/014908
+    >>> crt_garner([2, 3], [3, 5], 1000000007)
+    8
+    >>> crt_garner([2, 3], [3, 5], 5)
+    3
+    >>> crt_garner([0, 2], [4, 6], 1000000009)
+    8
+    >>> crt_garner([0, 2], [4, 6], 4)
+    0
+    >>> crt_garner([0, 1], [4, 6], 10)  # returns None
+    >>> crt_garner([], [], 3)  # lcm([]) == 1
+    0
+    """
+    # reduce the problem so that ms are prime to each other
+    # O(n (sum(log mi)+log mod)).
+    # cf. https://qiita.com/drken/items/ae02240cd1f8edfc86fd
+    ms = list(ms)
+    assert len(rs) == len(ms)
+    n = len(rs)
+    for i in range(n - 1):
+        for j in range(i + 1, n):
+            g = gcd(ms[i], ms[j])
+            if (rs[i] - rs[j]) % g:
+                return None
+            ms[i] //= g
+            ms[j] //= g
+            gi = gcd(g, ms[i])
+            gj = g // gi
+            # O(log log g).
+            # sample: g=1000, gi=1, gj=0.
+            while (g := gcd(gi, gj)) != 1:
+                gi *= g
+                gj //= g
+            ms[i] *= gi
+            ms[j] *= gj
+
+    # garner
+    ms.append(mod)  # m_n = mod
+    assert len(ms) == n + 1
+    # find: x = x0 + x1m0 + x2m0m1 + x3m0m1m2 + ... + x_{n-1}m0m1...m_{n-2}
+    # sx = [0%m0, x0%m1, (x0+x1m0)%m2, ..., (x0+...+x_{n-1}m0m1...m_{n-2})%m_n]
+    # mm = [1%m0, m0%m1, m0m1%m2, m0m1m2%m3, ..., m0m1m2...m_{n-1}%m_n]
+    sx = [0] * (n + 1)
+    mm = [1] * (n + 1)
+    for i in range(n):
+        xi = (rs[i] - sx[i]) * inv(mm[i], ms[i]) % ms[i]
+        for j in range(i + 1, n + 1):
+            sx[j] = (sx[j] + xi * mm[j]) % ms[j]
+            mm[j] = mm[j] * ms[i] % ms[j]
+    return sx[-1]
 
 
 # --------------------
@@ -491,4 +572,21 @@ def solve_yosupojudge_discrete_logarithm_mod():
         print(ans)
 
 
-solve_yosupojudge_enumerate_primes()
+def solve_yukicoder_no_187():
+    """
+    yukicoder: No.187 中華風 (Hard)
+    https://yukicoder.me/problems/no/187
+    """
+    MOD = 1000000007
+    N = int(input())
+    X = list[int]()
+    Y = list[int]()
+    for _ in range(N):
+        x, y = map(int, input().split())
+        X.append(x)
+        Y.append(y)
+    if all(x == 0 for x in X):
+        ans = lcmmod(*Y, mod=MOD)
+    else:
+        ans = crt_garner(X, Y, MOD)
+    print(ans if ans is not None else -1)
