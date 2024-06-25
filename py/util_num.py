@@ -1,7 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/util_num.py
 def popcount63(n: int) -> int:
     """
-    Returns the number of 1 bits. Faster than popcount().
+    Returns the number of 1 bits. Faster than popcount(n).
     Required: 0 <= n < (1 << 63).
     cf. https://nixeneko.hatenablog.com/entry/2018/03/04/000000
     >>> popcount(0b11110001)
@@ -85,15 +85,17 @@ def generate_primes(n: int) -> list[int]:
     return p
 
 
-def fact_in_primes(n: int, primes: list):
+from collections import Counter
+from collections.abc import Iterable
+
+
+def fact_in_primes(n: int, primes: Iterable[int]) -> Counter[int]:
     """
     primes must be sorted.
     >>> fact_in_primes(60, generate_primes(60))
     Counter({2: 2, 3: 1, 5: 1})
     """
     # assert 1 not in primes
-    from typing import Counter
-
     c = Counter[int]()
     for p in primes:
         if n < p:
@@ -105,16 +107,16 @@ def fact_in_primes(n: int, primes: list):
     return c
 
 
-def fact(n: int):
+from math import sqrt
+
+
+def fact(n: int) -> list[int]:
     """
-    Returned prime list will be sorted.
+    O(sqrt(n)). Returned prime list will be sorted.
     >>> fact(60)
     [2, 2, 3, 5]
     """
-    from math import sqrt
-    from typing import List
-
-    primes: List[int] = []
+    primes = list[int]()
     for p in range(2, 2 + int(sqrt(n))):
         while n % p == 0:
             n = n // p
@@ -145,7 +147,7 @@ def list_divisors(n: int) -> list[int]:
     return divs1
 
 
-def list_factors_eratosthenes(n: int):
+def list_factors_eratosthenes(n: int) -> list[list[int]]:
     """
     O(n log log n). Returns factors of [0, n].
     Factors will be sorted.
@@ -153,9 +155,7 @@ def list_factors_eratosthenes(n: int):
     >>> list_factors_eratosthenes(6)
     [[], [], [2], [3], [2], [5], [2, 3]]
     """
-    from typing import List
-
-    factorses: List[List[int]] = [[] for _ in range(n + 1)]
+    factorses = [list[int]() for _ in range(n + 1)]
     for i in range(2, n + 1):
         if len(factorses[i]) > 0:
             continue
@@ -164,15 +164,16 @@ def list_factors_eratosthenes(n: int):
     return factorses
 
 
-def factorize_eratosthenes(n: int):
+from collections import Counter
+
+
+def factorize_eratosthenes(n: int) -> list[Counter[int]]:
     """
     O(n log n). Returns counters of factors of [0, n].
     Note that len(factorses[0]) == len(factorses[1]) == 0.
     >>> factorize_eratosthenes(4)
     [Counter(), Counter(), Counter({2: 1}), Counter({3: 1}), Counter({2: 2})]
     """
-    from typing import Counter
-
     factorses = [Counter[int]() for _ in range(n + 1)]
     for i in range(2, n + 1):
         if len(factorses[i]) > 0:
@@ -187,7 +188,7 @@ def factorize_eratosthenes(n: int):
     return factorses
 
 
-def list_divisors_eratosthenes(n: int):
+def list_divisors_eratosthenes(n: int) -> list[list[int]]:
     """
     O(n log n). Returns divisors of of [0, n].
     Divisors will be sorted.
@@ -202,10 +203,10 @@ def list_divisors_eratosthenes(n: int):
     return divisorses
 
 
-from typing import Counter
+from collections import Counter
 
 
-def list_divisors_from_counter(factors: Counter[int]):
+def list_divisors_from_counter(factors: Counter[int]) -> list[int]:
     """
     >>> list_divisors_from_counter(Counter({2: 2, 3: 1, 5: 1}))
     [1, 5, 3, 15, 2, 10, 6, 30, 4, 20, 12, 60]
@@ -222,10 +223,10 @@ def list_divisors_from_counter(factors: Counter[int]):
     return q
 
 
-from typing import List
+from collections.abc import Iterable
 
 
-def list_divisors_from_list(x: int, factors: List[int]):
+def list_divisors_from_list(x: int, factors: Iterable[int]) -> list[int]:
     """
     >>> list_divisors_from_list(60, generate_primes(60))
     [1, 5, 3, 15, 2, 10, 6, 30, 4, 20, 12, 60]
@@ -290,12 +291,18 @@ def ceillog(n: int, b: int = 10) -> int:
     return ans
 
 
-def pow_iter(base, exp: int):
-    ans = 1
+from collections.abc import Callable
+from typing import TypeVar
+
+_T = TypeVar("_T")
+
+
+def pow_iter(base: _T, exp: int, e: _T, f: Callable[[_T, _T], _T]):
+    ans = e
     for i in reversed(range(exp.bit_length())):
-        ans = ans * ans
+        ans = f(ans, ans)
         if exp & (1 << i):
-            ans *= base
+            ans = f(ans, base)
     return ans
 
 
@@ -310,9 +317,7 @@ def euclid(a: int, b: int):
     >>> euclid(4, 6)
     (-1, 1, 2)
     """
-    from typing import List
-
-    ks: List[int] = []
+    ks = list[int]()
     while b != 0:
         ks.append(a // b)
         a, b = b, a % b
@@ -327,13 +332,22 @@ def inv(a: int, mod: int) -> int:
     Returns ia s.t. ia * a = 1 under mod.
     Returns 0 if nonexistent (gcd(a, mod) != 1).
     O(log min(a, mod)).
+    On PyPy 3.10: inv(a, mod) is faster than pow(a, -1, mod).
+    On CPython 3.11: inv(a, mod) is slower than pow(a, -1, mod).
+    >>> def inv2(a: int, mod: int) -> int:
+    ...     try:
+    ...         return pow(a, -1, mod)
+    ...     except ValueError:
+    ...         return 0
+    >>> for a in range(-100, 100):
+    ...     for mod in range(1, 20):
+    ...         assert inv(a, mod) == inv2(a, mod)
     """
     ia, _, d = euclid(a, mod)  # ia * a + _ * mod = d
     return ia % mod if d == 1 else 0
 
 
-from math import ceil, sqrt, gcd
-from typing import Dict
+from math import ceil, gcd, sqrt
 
 
 def discrete_log(a: int, b: int, m: int, m_is_prime: bool) -> int:
@@ -382,7 +396,7 @@ def discrete_log(a: int, b: int, m: int, m_is_prime: bool) -> int:
     # baby-step, giant-step
     # assert gcd(a, m) == 1, "unreachable"
     k = ceil(sqrt(m))
-    s: Dict[int, int] = {}
+    s = dict[int, int]()
     ax = 1
     for x in range(k):
         s.setdefault(ax, x)
@@ -401,13 +415,14 @@ def discrete_log(a: int, b: int, m: int, m_is_prime: bool) -> int:
     return -1
 
 
-from typing import List, Tuple, Optional
+from collections.abc import Sequence
 
 
-def crt_naive(rs: List[int], ms: List[int]) -> Tuple[int, Optional[int]]:
+def crt_naive(rs: Sequence[int], ms: Sequence[int]) -> tuple[int | None, int | None]:
     """
-    Returns (r, lcm(mi)) of x = r (mod lcm(mi)) s.t. x = ri (mod mi).
-    May return (0, None).
+    Returns (r, lcm(ms)) of x = r (mod lcm(ms)) s.t. x = ri (mod mi).
+    Returns (None, None) if there is no solution.
+    0 <= r < lcm(ms) or r is None.
     O(len(ms) sum(log mi)).
     cf. https://qiita.com/drken/items/ae02240cd1f8edfc86fd
     >>> crt_naive([2, 3], [3, 5])
@@ -415,14 +430,14 @@ def crt_naive(rs: List[int], ms: List[int]) -> Tuple[int, Optional[int]]:
     >>> crt_naive([0, 2], [4, 6])
     (8, 12)
     >>> crt_naive([0, 1], [4, 6])
-    (0, None)
+    (None, None)
     """
     assert len(rs) == len(ms)
     r, m = 0, 1
     for ri, mi in zip(rs, ms):
         p, _, d = euclid(m, mi)  # Note that p m/d + _ mi/d = 1
         if (ri - r) % d != 0:
-            return (0, None)
+            return (None, None)
         k = (ri - r) // d * p  # km = (ri-r)pm/d = ri-r (mod mi/d)
         l = k % (mi // d)
         r += l * m  # r+lm = r (mod m), r+lm = r+km = ri (mod mi/d)

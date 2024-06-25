@@ -360,3 +360,6 @@ class TreeInt(Tree[int]):
 
     def connect(self, i: int, j: int, cost: int = 1, edgeidx: int = -1) -> None:
         super().connect(i, j, cost, edgeidx)
+
+
+# --------------------

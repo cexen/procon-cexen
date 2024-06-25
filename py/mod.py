@@ -108,3 +108,6 @@ class Mod:
 
     def div(self, a: int, b: int) -> int:
         return a * self.inv(b) % self.mod
+
+
+# --------------------

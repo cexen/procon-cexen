@@ -1,6 +1,6 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/heapqueue.py
-from typing import TypeVar, Generic, Iterable, List
 import heapq
+from typing import Generic, Iterable, List, TypeVar
 
 # >= 3.8
 
@@ -130,3 +130,6 @@ class HeapQueueDiscardable(Generic[K_]):
 
 
 HeapQueueDiscardableInt = HeapQueueDiscardable[int]
+
+
+# --------------------

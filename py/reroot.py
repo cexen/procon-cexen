@@ -1,5 +1,5 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/tree.py
-from typing import TypeVar
+from typing import Callable, TypeAlias, TypeVar
 
 E_ = TypeVar("E_")
 V_ = TypeVar("V_")
@@ -7,20 +7,16 @@ V_ = TypeVar("V_")
 
 class TreeReroot:
     """
-    v1.5 cexen.
+    v1.6 cexen.
     See `solve_*()` below for examples.
     """
 
-    from typing import Callable, Optional, Tuple, List
-
     def __init__(self, n: int):
-        from typing import Tuple, List
-
         self.n = n
         self.root = -1
         self.idxs = [-1] * n
-        self.adjs: List[List[Tuple[int, int]]] = [[] for _ in range(n)]
-        self.parents: List[Tuple[int, int]] = [(-1, -1)] * n
+        self.adjs: list[list[tuple[int, int]]] = [[] for _ in range(n)]
+        self.parents: list[tuple[int, int]] = [(-1, -1)] * n
 
     def connect(self, u: int, v: int, e: int = -1) -> None:
         """
@@ -59,12 +55,10 @@ class TreeReroot:
         add_v: Callable[[E_, int, int], V_],
         ee: Callable[[], E_],
         root: int = 0,
-    ) -> Tuple[List[V_], List[List[Optional[E_]]]]:
-        from typing import Optional, List
-
+    ) -> tuple[list[V_], list[list[E_ | None]]]:
         self.sort(root)
-        ans0: List[V_] = [None] * self.n  # type: ignore
-        edgeses: List[List[Optional[E_]]] = [[] for _ in range(self.n)]
+        ans0: list[V_] = [None] * self.n  # type: ignore
+        edgeses: list[list[E_ | None]] = [[] for _ in range(self.n)]
         for i in reversed(self.idxs):
             parent = self.parents[i]
             edges = edgeses[i]
@@ -85,11 +79,9 @@ class TreeReroot:
         add_v: Callable[[E_, int, int], V_],
         ee: Callable[[], E_],
         root: int = 0,
-    ) -> List[V_]:
-        from typing import List
-
+    ) -> list[V_]:
         _, edgeses = self.collect_for_root(add_e, merge, add_v, ee, root)
-        ans: List[V_] = [None] * self.n  # type: ignore
+        ans: list[V_] = [None] * self.n  # type: ignore
         q = [(root, ee())]
         while q:
             i, edge_parent = q.pop()
@@ -121,8 +113,8 @@ class TreeReroot:
 ############
 # template #
 ############
-# E = int
-# V = int
+# E: TypeAlias = int
+# V: TypeAlias = int
 # def add_e(v: V, i: int, e: int) -> E:
 #     raise NotImplementedError
 # def merge(l: E, r: E) -> E:

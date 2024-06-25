@@ -27,3 +27,6 @@ def matmul(a: List[List[int]], b: List[List[int]], mod: int) -> List[List[int]]:
                 v = (v + ai[k] * bTj[k]) % mod
             ci[j] = v
     return c
+
+
+# --------------------
