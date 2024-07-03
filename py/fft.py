@@ -195,17 +195,123 @@ class FFTNaive:
 
 class FFT:
     """
-    NotImplemented yet
+    @cexen v1.0
+    FFT on arbitrary mod using Garner.
     cf: [任意modでの畳み込み演算をO(n log(n))で - math314のブログ](https://math314.hateblo.jp/entry/2015/05/07/014908)
     """
 
-    ...
+    def __init__(self, mod: int = 1000000007):
+        """"""
+        self.mod = mod
+        self.fft1 = FFTNaive(mod=167772161)
+        self.fft2 = FFTNaive(mod=469762049)
+        self.fft3 = FFTNaive(mod=1224736769)
+        self.lcm = self.fft1.mod * self.fft2.mod * self.fft3.mod
+        assert 0 < mod < self.lcm
+
+    def _zip_garner(
+        self, c1: Sequence[int], c2: Sequence[int], c3: Sequence[int]
+    ) -> list[int]:
+        m1 = self.fft1.mod
+        m2 = self.fft2.mod
+        m3 = self.fft3.mod
+        mod = self.mod
+        invm1 = pow(m1, -1, m2)
+        invm1m2 = pow(m1 * m2, -1, m3)
+        m1m2 = m1 * m2 % mod
+        assert len(c1) == len(c2) == len(c3)
+        c = [0] * len(c1)
+        for i in range(len(c)):
+            x0 = c1[i]
+            x1 = (c2[i] - x0) * invm1 % m2
+            x2 = (c3[i] - x0 - x1 * m1 % m3) * invm1m2 % m3
+            c[i] = (x0 + x1 * m1 + x2 * m1m2) % mod
+        return c
+
+    def conv(self, a: Sequence[int], b: Sequence[int]) -> list[int]:
+        """
+        Note that:
+        `x == crt([x % mi for mi in m], m)` holds iff 0 <= x < lcm(m).
+        Especially, x must not be negative.
+        """
+        assert min(len(a), len(b)) * (self.mod - 1) ** 2 < self.lcm
+        a = [ai % self.mod for ai in a]
+        b = [bi % self.mod for bi in b]
+        c1 = self.fft1.conv(a, b)
+        c2 = self.fft2.conv(a, b)
+        c3 = self.fft3.conv(a, b)
+        c = self._zip_garner(c1, c2, c3)
+        return c
+
+    def inv(self, a: Sequence[int], n: int) -> list[int]:
+        """
+        O(n log n). returns b' s.t. b[:n] == b' and a*b == [1, 0, 0, ...].
+        Required: gcd(a[0], mod) == 1.
+        cf.
+        https://nyaannyaan.github.io/library/fps/formal-power-series.hpp.html
+        https://nyaannyaan.github.io/library/fps/ntt-friendly-fps.hpp
+        https://paper.dropbox.com/doc/fps-EoHXQDZxfduAB8wD1PMBW
+        """
+        assert len(a) > 0 and n >= 0
+        assert a[0] != 0  # non-singular
+        assert gcd(a[0], self.mod) == 1
+        assert min(len(a), n) * (self.mod - 1) ** 2 < self.lcm
+        b = [0] * n
+        b[0] = pow(a[0], -1, self.mod)
+        for i in range((n - 1).bit_length()):
+            d = 1 << i
+            k = min(len(a), d << 1)
+            f = [[0] * (d << 1) for _ in range(3)]
+            g = [[0] * (d << 1) for _ in range(3)]
+            fftn = [self.fft1, self.fft2, self.fft3]
+            ak = a[:k]
+            bd = b[:d]
+            for fi, gi, ffti in zip(f, g, fftn):
+                fi[:k] = ak
+                gi[:d] = bd
+                ffti.fft(fi)
+                ffti.fft(gi)
+                for j in range(d << 1):
+                    fi[j] = fi[j] * gi[j] % ffti.mod
+                ffti.ifft(fi)
+            f[0][:d] = [0] * d
+            f[0][d:] = self._zip_garner(f[0][d:], f[1][d:], f[2][d:])
+            f[1][:] = f[0]
+            f[2][:] = f[0]
+            for fi, gi, ffti in zip(f, g, fftn):
+                ffti.fft(fi)
+                for j in range(d << 1):
+                    fi[j] = fi[j] * gi[j] % ffti.mod
+                ffti.ifft(fi)
+            jmax = min(n, d << 1)
+            nb = self._zip_garner(f[0][d:jmax], f[1][d:jmax], f[2][d:jmax])
+            for j in range(d, jmax):
+                b[j] = -nb[j - d] % self.mod
+        return b
+
+    def div_at_n(self, a: Sequence[int], b: Sequence[int], n: int) -> int:
+        """
+        O(k log k log n) where k = len(a) + len(b). returns (a/b)[n].
+        Required: gcd(b[0], mod) == 1.
+        Bostan-Mori.
+        cf. https://qiita.com/ryuhe1/items/da5acbcce4ac1911f47a
+        cf. https://nyaannyaan.github.io/library/fps/kitamasa.hpp.html
+        """
+        assert gcd(b[0], self.mod) == 1
+        while n > 0:
+            nb = [(-1) ** i * v for i, v in enumerate(b)]
+            p = self.conv(a, nb)
+            q = self.conv(b, nb)
+            a = p[n % 2 :: 2]
+            b = q[::2]
+            n = n // 2
+        return a[0] * pow(b[0], -1, self.mod) % self.mod
 
 
 # --------------------
 
 
-def solve_atcoder_practice2_f():
+def solve_atcoder_practice2_f_fftnaive():
     """
     AtCoder ACL Practice Contest F - Convolution
     https://atcoder.jp/contests/practice2/tasks/practice2_f
@@ -219,7 +325,21 @@ def solve_atcoder_practice2_f():
     print(*C)
 
 
-def solve_yosupojudge_inv():
+def solve_atcoder_practice2_f_fft():
+    """
+    AtCoder ACL Practice Contest F - Convolution
+    https://atcoder.jp/contests/practice2/tasks/practice2_f
+    """
+    MOD = 998244353
+    fft = FFT(MOD)
+    N, M = map(int, input().split())
+    A = [int(v) for v in input().split()]
+    B = [int(v) for v in input().split()]
+    C = fft.conv(A, B)
+    print(*C)
+
+
+def solve_yosupojudge_inv_fftnaive():
     """
     Library Checker: Inv of Formal Power Series
     https://judge.yosupo.jp/problem/inv_of_formal_power_series
@@ -232,5 +352,14 @@ def solve_yosupojudge_inv():
     print(*B)
 
 
-# solve_atcoder_practice2_f()
-# solve_yosupojudge_inv()
+def solve_yosupojudge_inv_fft():
+    """
+    Library Checker: Inv of Formal Power Series
+    https://judge.yosupo.jp/problem/inv_of_formal_power_series
+    """
+    MOD = 998244353
+    fft = FFT(MOD)
+    N = int(input())
+    A = [int(v) for v in input().split()]
+    B = fft.inv(A, N)
+    print(*B)
