@@ -1,21 +1,19 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/util_seq.py
-from typing import Sequence, List, Tuple, TypeVar
+from typing import Sequence, TypeVar
 
-T_ = TypeVar("T_")
+_T = TypeVar("_T")
 
 
-def rleify(s: Sequence[T_]) -> List[Tuple[T_, int]]:
+def rleify(s: Sequence[_T]) -> list[tuple[_T, int]]:
     """
     O(len(s)). Run Length Encoding.
     >>> rleify("assassin")
     [('a', 1), ('s', 2), ('a', 1), ('s', 2), ('i', 1), ('n', 1)]
     """
-    from typing import List, Tuple
-
     if not len(s):
         return []
     i = 0
-    rle: List[Tuple[T_, int]] = []
+    rle: list[tuple[_T, int]] = []
     for j in range(len(s) + 1):
         if j == len(s) or s[i] != s[j]:
             rle.append((s[i], j - i))
@@ -23,10 +21,10 @@ def rleify(s: Sequence[T_]) -> List[Tuple[T_, int]]:
     return rle
 
 
-from typing import Sequence, List
+from typing import Any, Sequence
 
 
-def calc_common_prefix_lengths_z(seq: Sequence) -> List[int]:
+def calc_common_prefix_lengths_z(seq: Sequence[Any]) -> list[int]:
     """
     O(len(seq)). Z-algorithm.
     Returns dp s.t. len(dp) == len(seq).
@@ -54,3 +52,6 @@ def calc_common_prefix_lengths_z(seq: Sequence) -> List[int]:
         i = ni
         j = nj
     return dp
+
+
+# --------------------

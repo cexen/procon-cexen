@@ -4,40 +4,34 @@ import sys
 sys.setrecursionlimit(10**9)
 
 
-from typing import (
-    Mapping,
-    TypeVar,
-    Generic,
-    MutableMapping,
-    # runtime_checkable,  # >= 3.8
-)
 from abc import ABC, abstractmethod
+from collections import deque
+from collections.abc import Callable, Iterable, Mapping, MutableMapping, MutableSet
+from typing import Generic, Protocol, TypeVar, overload, runtime_checkable
 
-# >= 3.8
-# C = TypeVar("C", bound="Comparable")
-# @runtime_checkable
-# class Comparable(Protocol):
-#     @abstractmethod
-#     def __lt__(self: C, other: C) -> bool:
-#         pass
-
-#     @abstractmethod
-#     def __gt__(self: C, other: C) -> bool:
-#         pass
-# K = TypeVar("K", bound=Comparable)
-K = TypeVar("K")
-V = TypeVar("V")
+_C = TypeVar("_C", bound="Comparable")
 
 
-class AVLNodeBase(ABC, Generic[K, V]):
+@runtime_checkable
+class Comparable(Protocol):
+    @abstractmethod
+    def __lt__(self: _C, value: _C, /) -> bool: ...
+
+    @abstractmethod
+    def __gt__(self: _C, value: _C, /) -> bool: ...
+
+
+_K = TypeVar("_K", bound=Comparable)
+_V = TypeVar("_V")
+
+
+class AVLNodeBase(ABC, Generic[_K, _V]):
     __slots__ = ()
 
     height: int
     size: int
-    _l: "AVLNodeBase[K, V]"
-    _r: "AVLNodeBase[K, V]"
-
-    from typing import List, Tuple, Set, Optional
+    _l: "AVLNodeBase[_K, _V]"
+    _r: "AVLNodeBase[_K, _V]"
 
     @property
     def bias(self) -> int:
@@ -48,7 +42,7 @@ class AVLNodeBase(ABC, Generic[K, V]):
         return self._l
 
     @l.setter
-    def l(self, val: "AVLNodeBase[K, V]"):
+    def l(self, val: "AVLNodeBase[_K, _V]"):
         self._l_setter(val)
 
     @property
@@ -56,7 +50,7 @@ class AVLNodeBase(ABC, Generic[K, V]):
         return self._r
 
     @r.setter
-    def r(self, val: "AVLNodeBase[K, V]"):
+    def r(self, val: "AVLNodeBase[_K, _V]"):
         self._r_setter(val)
 
     def __bool__(self) -> bool:
@@ -77,112 +71,104 @@ class AVLNodeBase(ABC, Generic[K, V]):
         return iter(self.keys())
 
     @abstractmethod
-    def __getitem__(self, key: K) -> V:
+    def __getitem__(self, key: _K) -> _V:
         """O(log n)."""
         ...
 
     @abstractmethod
-    def setitem(self, key: K, value: V) -> "AVLNodeBase[K, V]":
+    def setitem(self, key: _K, value: _V) -> "AVLNodeBase[_K, _V]":
         """O(log n)."""
         ...
 
     @abstractmethod
-    def insertitem(self, key: K, value: V) -> Tuple["AVLNodeBase[K, V]", bool]:
+    def insertitem(self, key: _K, value: _V) -> tuple["AVLNodeBase[_K, _V]", bool]:
         """O(log n). Insert an item only if the key does not exist. Returns whether inserted."""
         ...
 
     @abstractmethod
-    def pop(self, key: K) -> Tuple["AVLNodeBase[K, V]", V]:
+    def pop(self, key: _K) -> tuple["AVLNodeBase[_K, _V]", _V]:
         """O(log n). Delete and return an item by key."""
         ...
 
     @abstractmethod
-    def delitem(self, key: K) -> "AVLNodeBase[K, V]":
+    def delitem(self, key: _K) -> "AVLNodeBase[_K, _V]":
         """O(log n)."""
         ...
 
     @abstractmethod
-    def popmin(self) -> Tuple["AVLNodeBase[K, V]", K, V]:
+    def popmin(self) -> tuple["AVLNodeBase[_K, _V]", _K, _V]:
         """O(log n). Delete and return min item."""
         ...
 
     @abstractmethod
-    def popmax(self) -> Tuple["AVLNodeBase[K, V]", K, V]:
+    def popmax(self) -> tuple["AVLNodeBase[_K, _V]", _K, _V]:
         """O(log n). Delete and return max item."""
         ...
 
     @abstractmethod
-    def min(self) -> Tuple[K, V]:
+    def min(self) -> tuple[_K, _V]:
         """O(log n)."""
         ...
 
     @abstractmethod
-    def max(self) -> Tuple[K, V]:
+    def max(self) -> tuple[_K, _V]:
         """O(log n)."""
         ...
 
     @abstractmethod
-    def bisect_left(self, key: K) -> Optional[Tuple[K, V]]:
+    def bisect_left(self, key: _K) -> tuple[_K, _V] | None:
         """O(log n)."""
 
     @abstractmethod
-    def bisect_right(self, key: K) -> Optional[Tuple[K, V]]:
+    def bisect_right(self, key: _K) -> tuple[_K, _V] | None:
         """O(log n)."""
 
     @abstractmethod
-    def _l_setter(self, val: "AVLNodeBase[K, V]"):
-        ...
+    def _l_setter(self, val: "AVLNodeBase[_K, _V]"): ...
 
     @abstractmethod
-    def _r_setter(self, val: "AVLNodeBase[K, V]"):
-        ...
+    def _r_setter(self, val: "AVLNodeBase[_K, _V]"): ...
 
     @abstractmethod
-    def clear(self) -> "AVLNodeBase[K, V]":
-        ...
+    def clear(self) -> "AVLNodeBase[_K, _V]": ...
 
     @abstractmethod
-    def keys(self) -> Set[K]:
+    def keys(self) -> set[_K]:
         """O(n)."""
         ...
 
     @abstractmethod
     # https://github.com/python/typeshed/issues/4435
-    def values(self) -> List[V]:
+    def values(self) -> list[_V]:
         """O(n)."""
         ...
 
     @abstractmethod
-    def items(self) -> Set[Tuple[K, V]]:
+    def items(self) -> set[tuple[_K, _V]]:
         """O(n)."""
         ...
 
     @abstractmethod
-    def rotate_l(self) -> "AVLNodeBase[K, V]":
-        ...
+    def rotate_l(self) -> "AVLNodeBase[_K, _V]": ...
 
     @abstractmethod
-    def rotate_r(self) -> "AVLNodeBase[K, V]":
-        ...
+    def rotate_r(self) -> "AVLNodeBase[_K, _V]": ...
 
     @abstractmethod
-    def rotate_lr(self) -> "AVLNodeBase[K, V]":
-        ...
+    def rotate_lr(self) -> "AVLNodeBase[_K, _V]": ...
 
     @abstractmethod
-    def rotate_rl(self) -> "AVLNodeBase[K, V]":
-        ...
+    def rotate_rl(self) -> "AVLNodeBase[_K, _V]": ...
 
     @abstractmethod
-    def dump(self, indent: str = "", head: str = "") -> str:
-        ...
+    def dump(self, indent: str = "", head: str = "") -> str: ...
 
 
 class AVLNodeEmptyError(RuntimeError):
     pass
 
 
-class AVLNodeEmpty(AVLNodeBase[K, V]):
+class AVLNodeEmpty(AVLNodeBase[_K, _V]):
     __slots__ = ("_l", "_r")
 
     height = 0
@@ -210,11 +196,11 @@ class AVLNodeEmpty(AVLNodeBase[K, V]):
     def __getitem__(self, _):
         raise KeyError
 
-    def setitem(self, key: K, value: V) -> "AVLNode[K, V]":
+    def setitem(self, key: _K, value: _V) -> "AVLNode[_K, _V]":
         newroot = AVLNode(key, value)
         return newroot
 
-    def insertitem(self, key: K, value: V):
+    def insertitem(self, key: _K, value: _V):
         return self.setitem(key, value), True
 
     def pop(self, _):
@@ -276,20 +262,18 @@ class AVLNodeEmpty(AVLNodeBase[K, V]):
         return graph
 
 
-class AVLNode(AVLNodeBase[K, V]):
+class AVLNode(AVLNodeBase[_K, _V]):
     __slots__ = ("key", "value", "height", "size", "_l", "_r")
 
     is_empty = False
 
-    from typing import List, Tuple, Set, Optional
-
-    def __init__(self, key: K, value: V):
+    def __init__(self, key: _K, value: _V):
         self.key = key
         self.value = value
         self.height = 1
         self.size = 1
-        self._l = AVLNodeEmpty[K, V]()
-        self._r = AVLNodeEmpty[K, V]()
+        self._l = AVLNodeEmpty[_K, _V]()
+        self._r = AVLNodeEmpty[_K, _V]()
 
     def __str__(self) -> str:
         return f"{{{self.key}: {self.value}}}"
@@ -304,7 +288,7 @@ class AVLNode(AVLNodeBase[K, V]):
             return key in self.r
         return key == self.key
 
-    def __getitem__(self, key) -> V:
+    def __getitem__(self, key) -> _V:
         if key < self.key:  # type: ignore
             return self.l[key]  # type: ignore
         if key > self.key:  # type: ignore
@@ -313,7 +297,7 @@ class AVLNode(AVLNodeBase[K, V]):
             return self.value
         raise KeyError
 
-    def setitem(self, key: K, value: V) -> "AVLNode[K, V]":
+    def setitem(self, key: _K, value: _V) -> "AVLNode[_K, _V]":
         if key < self.key:  # type: ignore
             self.l = self.l.setitem(key, value)
             return self._balance()
@@ -326,12 +310,12 @@ class AVLNode(AVLNodeBase[K, V]):
         else:
             raise KeyError
 
-    def insertitem(self, key: K, value: V) -> Tuple["AVLNode[K, V]", bool]:
+    def insertitem(self, key: _K, value: _V) -> tuple["AVLNode[_K, _V]", bool]:
         if key == self.key:
             return self, False
         return self.setitem(key, value), True
 
-    def pop(self, key: K) -> Tuple[AVLNodeBase[K, V], V]:
+    def pop(self, key: _K) -> tuple[AVLNodeBase[_K, _V], _V]:
         if key < self.key:  # type: ignore
             self.l, value = self.l.pop(key)
             return self._balance(), value
@@ -349,62 +333,62 @@ class AVLNode(AVLNodeBase[K, V]):
         else:
             raise KeyError
 
-    def delitem(self, key: K) -> AVLNodeBase[K, V]:
+    def delitem(self, key: _K) -> AVLNodeBase[_K, _V]:
         return self.pop(key)[0]
 
-    def popmin(self) -> Tuple[AVLNodeBase[K, V], K, V]:
+    def popmin(self) -> tuple[AVLNodeBase[_K, _V], _K, _V]:
         if self.l.height:
             self.l, key, value = self.l.popmin()
             return self._balance(), key, value
         return self.r, self.key, self.value
 
-    def popmax(self) -> Tuple[AVLNodeBase[K, V], K, V]:
+    def popmax(self) -> tuple[AVLNodeBase[_K, _V], _K, _V]:
         if self.r.height:
             self.r, key, value = self.r.popmax()
             return self._balance(), key, value
         return self.l, self.key, self.value
 
-    def max(self) -> Tuple[K, V]:
+    def max(self) -> tuple[_K, _V]:
         if self.r.height:
             return self.r.max()
         return self.key, self.value
 
-    def min(self) -> Tuple[K, V]:
+    def min(self) -> tuple[_K, _V]:
         if self.l.height:
             return self.l.min()
         return self.key, self.value
 
-    def bisect_left(self, key: K) -> Optional[Tuple[K, V]]:
-        if key < self.key or key == self.key:  # type: ignore
+    def bisect_left(self, key: _K) -> tuple[_K, _V] | None:
+        if key < self.key or key == self.key:
             if self.l.height:
                 ret = self.l.bisect_left(key)
                 if ret is not None:
                     return ret
             return self.key, self.value
-        elif key > self.key:  # type: ignore
+        elif key > self.key:
             return self.r.bisect_left(key)
         elif key == self.key:
             return self.key, self.value
         else:
             raise ValueError
 
-    def bisect_right(self, key: K) -> Optional[Tuple[K, V]]:
-        if key < self.key:  # type: ignore
+    def bisect_right(self, key: _K) -> tuple[_K, _V] | None:
+        if key < self.key:
             if self.l.height:
                 ret = self.l.bisect_right(key)
                 if ret is not None:
                     return ret
             return self.key, self.value
-        elif key > self.key or key == self.key:  # type: ignore
+        elif key > self.key or key == self.key:
             return self.r.bisect_right(key)
         else:
             raise ValueError
 
-    def _l_setter(self, value: AVLNodeBase[K, V]) -> None:
+    def _l_setter(self, value: AVLNodeBase[_K, _V]) -> None:
         self._l = value
         self._refresh_property()
 
-    def _r_setter(self, value: AVLNodeBase[K, V]) -> None:
+    def _r_setter(self, value: AVLNodeBase[_K, _V]) -> None:
         self._r = value
         self._refresh_property()
 
@@ -415,16 +399,16 @@ class AVLNode(AVLNodeBase[K, V]):
     def clear(self):
         return AVLNodeEmpty()
 
-    def keys(self) -> Set[K]:
+    def keys(self) -> set[_K]:
         return self.l.keys() | set([self.key]) | self.r.keys()
 
-    def values(self) -> List[V]:
+    def values(self) -> list[_V]:
         return self.l.values() + [self.value] + self.r.values()
 
-    def items(self) -> Set[Tuple[K, V]]:
+    def items(self) -> set[tuple[_K, _V]]:
         return self.l.items() | set([(self.key, self.value)]) | self.r.items()
 
-    def _balance(self) -> "AVLNode[K, V]":
+    def _balance(self) -> "AVLNode[_K, _V]":
         if self.bias > 1:
             return self.rotate_r() if self.l.bias >= 0 else self.rotate_lr()  # type: ignore
         if self.bias < -1:
@@ -458,7 +442,7 @@ class AVLNode(AVLNodeBase[K, V]):
         return graph
 
 
-class AVLMap(MutableMapping[K, V]):
+class AVLMap(MutableMapping[_K, _V]):
     """
     v1.1 @cexen
     Based on: http://wwwa.pikara.ne.jp/okojisan/avl-tree/
@@ -481,18 +465,14 @@ class AVLMap(MutableMapping[K, V]):
     >>> test_avlmap()
     """
 
-    from typing import List, Tuple, Set, Mapping, Iterable, Optional, overload
+    @overload
+    def __init__(self, iterable: Mapping[_K, _V] | None = None): ...
 
     @overload
-    def __init__(self, iterable: Optional[Mapping[K, V]] = None):
-        ...
-
-    @overload
-    def __init__(self, iterable: Optional[Iterable[Tuple[K, V]]] = None):
-        ...
+    def __init__(self, iterable: Iterable[tuple[_K, _V]] | None = None): ...
 
     def __init__(self, iterable=None):
-        self._root: AVLNodeBase[K, V] = AVLNodeEmpty[K, V]()
+        self._root: AVLNodeBase[_K, _V] = AVLNodeEmpty[_K, _V]()
         if iterable is not None:
             if isinstance(iterable, Mapping):
                 iterable = iterable.items()
@@ -517,24 +497,24 @@ class AVLMap(MutableMapping[K, V]):
     def __contains__(self, key) -> bool:
         return key in self._root
 
-    def __getitem__(self, key: K) -> V:
+    def __getitem__(self, key: _K) -> _V:
         return self._root[key]
 
-    def __setitem__(self, key: K, value: V) -> None:
+    def __setitem__(self, key: _K, value: _V) -> None:
         self._root = self._root.setitem(key, value)
 
-    def __delitem__(self, key: K) -> None:
+    def __delitem__(self, key: _K) -> None:
         self._root = self._root.delitem(key)
 
     def clear(self) -> None:
         self._root = self._root.clear()
 
-    def insert(self, key: K, value: V) -> bool:
+    def insert(self, key: _K, value: _V) -> bool:
         """Insert an item only if the key does not exist. Returns whether inserted."""
         self._root, success = self._root.insertitem(key, value)
         return success
 
-    def pop(self, key: K, default=None) -> V:
+    def pop(self, key: _K, default=None) -> _V:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.pop(3)
@@ -549,7 +529,7 @@ class AVLMap(MutableMapping[K, V]):
                 raise KeyError
         return value
 
-    def popmin(self) -> Tuple[K, V]:
+    def popmin(self) -> tuple[_K, _V]:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.popmin()
@@ -560,7 +540,7 @@ class AVLMap(MutableMapping[K, V]):
         self._root, key, value = self._root.popmin()
         return key, value
 
-    def popmax(self) -> Tuple[K, V]:
+    def popmax(self) -> tuple[_K, _V]:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.popmax()
@@ -571,7 +551,7 @@ class AVLMap(MutableMapping[K, V]):
         self._root, key, value = self._root.popmax()
         return key, value
 
-    def min(self) -> Tuple[K, V]:
+    def min(self) -> tuple[_K, _V]:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.min()
@@ -579,7 +559,7 @@ class AVLMap(MutableMapping[K, V]):
         """
         return self._root.min()
 
-    def max(self) -> Tuple[K, V]:
+    def max(self) -> tuple[_K, _V]:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.max()
@@ -587,7 +567,7 @@ class AVLMap(MutableMapping[K, V]):
         """
         return self._root.max()
 
-    def bisect_left(self, key: K) -> Optional[Tuple[K, V]]:
+    def bisect_left(self, key: _K) -> tuple[_K, _V] | None:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.bisect_left(-1)
@@ -602,7 +582,7 @@ class AVLMap(MutableMapping[K, V]):
         """
         return self._root.bisect_left(key)
 
-    def bisect_right(self, key: K) -> Optional[Tuple[K, V]]:
+    def bisect_right(self, key: _K) -> tuple[_K, _V] | None:
         """
         >>> am = AVLMap[int, str]({0: "a", 3: "d", 4: "e"})
         >>> am.bisect_right(-1)
@@ -616,21 +596,20 @@ class AVLMap(MutableMapping[K, V]):
         """
         return self._root.bisect_right(key)
 
-    def keys(self) -> Set[K]:
+    def keys(self) -> set[_K]:
         return self._root.keys()
 
-    # https://github.com/python/typeshed/issues/4435
-    def values(self) -> List[V]:  # type: ignore
+    def values(self) -> list[_V]:
         return self._root.values()
 
-    def items(self) -> Set[Tuple[K, V]]:
+    def items(self) -> set[tuple[_K, _V]]:
         return self._root.items()
 
     def dump(self) -> str:
         return self._root.dump()
 
 
-class AVLDefaultMap(AVLMap[K, V]):
+class AVLDefaultMap(AVLMap[_K, _V]):
     """
     v1.1 @cexen
     Based on: http://wwwa.pikara.ne.jp/okojisan/avl-tree/
@@ -651,51 +630,42 @@ class AVLDefaultMap(AVLMap[K, V]):
     0
     """
 
-    from typing import Tuple, Mapping, Iterable, Callable, Optional, overload
+    @overload
+    def __init__(
+        self,
+        iterable: Mapping[_K, _V] | None = None,
+        default_factory: Callable[[], _V] | None = None,
+    ): ...
 
     @overload
     def __init__(
         self,
-        iterable: Optional[Mapping[K, V]] = None,
-        default_factory: Optional[Callable[[], V]] = None,
-    ):
-        ...
+        iterable: Iterable[tuple[_K, _V]] | None = None,
+        default_factory: Callable[[], _V] | None = None,
+    ): ...
 
-    @overload
-    def __init__(
-        self,
-        iterable: Optional[Iterable[Tuple[K, V]]] = None,
-        default_factory: Optional[Callable[[], V]] = None,
-    ):
-        ...
-
-    def __init__(
-        self, iterable=None, default_factory: Optional[Callable[[], V]] = None
-    ):
+    def __init__(self, iterable=None, default_factory: Callable[[], _V] | None = None):
         super().__init__(iterable)
         self.default_factory = default_factory
 
-    def __missing__(self, key: K) -> V:
+    def __missing__(self, key: _K) -> _V:
         if self.default_factory is None:
             raise KeyError(key)
         value = self.default_factory()
         self[key] = value
         return value
 
-    def __getitem__(self, key: K) -> V:
+    def __getitem__(self, key: _K) -> _V:
         try:
             return self._root[key]
         except KeyError:
             return self.__missing__(key)
 
 
-from typing import MutableSet
-
-
-class AVLSet(MutableSet[K]):
+class AVLset(MutableSet[_K]):
     """
     v1.1 @cexen
-    >>> s = AVLSet[int]([3, 1, 4])
+    >>> s = AVLset[int]([3, 1, 4])
     >>> s.discard(1)
     >>> s.remove(3)
     >>> s.pop()
@@ -703,7 +673,7 @@ class AVLSet(MutableSet[K]):
     >>> len(s)
     0
     >>> from typing import Union
-    >>> s = AVLSet[Union[int, float]]()
+    >>> s = AVLset[Union[int, float]]()
     >>> s.insert(1)
     True
     >>> s.insert(1.0)
@@ -713,10 +683,8 @@ class AVLSet(MutableSet[K]):
     >>> test_avlset()
     """
 
-    from typing import Iterable, Optional
-
-    def __init__(self, iterable: Optional[Iterable[K]] = None):
-        self._am = AVLMap[K, K]()
+    def __init__(self, iterable: Iterable[_K] | None = None):
+        self._am = AVLMap[_K, _K]()
         if iterable is not None:
             for k in iterable:
                 self._am.insert(k, k)
@@ -734,7 +702,7 @@ class AVLSet(MutableSet[K]):
         return str(set(self))
 
     def __repr__(self):
-        return f"AVLSet({str(self)})"
+        return f"AVLset({str(self)})"
 
     def __contains__(self, key) -> bool:
         return key in self._am
@@ -742,41 +710,41 @@ class AVLSet(MutableSet[K]):
     def clear(self) -> None:
         self._am.clear()
 
-    def add(self, key: K) -> None:
+    def add(self, key: _K) -> None:
         self.insert(key)
 
-    def insert(self, key: K) -> bool:
+    def insert(self, key: _K) -> bool:
         return self._am.insert(key, key)
 
-    def remove(self, key: K) -> None:
+    def remove(self, key: _K) -> None:
         del self._am[key]
 
-    def discard(self, key: K) -> None:
+    def discard(self, key: _K) -> None:
         try:
             self.remove(key)
         except KeyError:
             pass
 
-    def pop(self) -> K:
+    def pop(self) -> _K:
         return self.popmin()
 
-    def popmin(self) -> K:
+    def popmin(self) -> _K:
         return self._am.popmin()[0]
 
-    def popmax(self) -> K:
+    def popmax(self) -> _K:
         return self._am.popmax()[0]
 
-    def min(self) -> K:
+    def min(self) -> _K:
         return self._am.min()[0]
 
-    def max(self) -> K:
+    def max(self) -> _K:
         return self._am.max()[0]
 
-    def bisect_left(self, key: K) -> Optional[K]:
+    def bisect_left(self, key: _K) -> _K | None:
         ret = self._am.bisect_left(key)
         return None if ret is None else ret[0]
 
-    def bisect_right(self, key: K) -> Optional[K]:
+    def bisect_right(self, key: _K) -> _K | None:
         ret = self._am.bisect_right(key)
         return None if ret is None else ret[0]
 
@@ -784,10 +752,10 @@ class AVLSet(MutableSet[K]):
         return self._am.dump()
 
 
-class AVLMultiSet(MutableSet[K]):
+class AVLMultiset(MutableSet[_K]):
     """
     v1.1 @cexen
-    >>> s = AVLMultiSet[int]([3, 1, 1, 4])
+    >>> s = AVLMultiset[int]([3, 1, 1, 4])
     >>> s.discard(1)
     >>> s.remove(3)
     >>> s.popmax()
@@ -798,8 +766,7 @@ class AVLMultiSet(MutableSet[K]):
     1
     >>> len(s)
     0
-    >>> from typing import Union
-    >>> s = AVLMultiSet[Union[int, float]]()
+    >>> s = AVLMultiset[int | float]()
     >>> s.insert(1)
     True
     >>> s.insert(1.0)
@@ -816,14 +783,8 @@ class AVLMultiSet(MutableSet[K]):
     >>> test_avlmultiset()
     """
 
-    from typing import Iterable, Deque, Optional
-
-    def __init__(self, iterable: Optional[Iterable[K]] = None):
-        from typing import Deque
-
-        self._am: AVLDefaultMap[K, Deque[K]] = AVLDefaultMap[K, Deque[K]](
-            default_factory=Deque[K]
-        )
+    def __init__(self, iterable: Iterable[_K] | None = None):
+        self._am = AVLDefaultMap[_K, deque[_K]](default_factory=deque)
         self.size = 0
         if iterable is not None:
             for k in iterable:
@@ -843,7 +804,7 @@ class AVLMultiSet(MutableSet[K]):
         return str(list(self))
 
     def __repr__(self):
-        return f"AVLMultiSet({str(self)})"
+        return f"AVLMultiset({str(self)})"
 
     def __contains__(self, key) -> bool:
         return key in self._am
@@ -852,61 +813,59 @@ class AVLMultiSet(MutableSet[K]):
         self._am.clear()
         self.size = 0
 
-    def add(self, key: K) -> None:
+    def add(self, key: _K) -> None:
         self._am[key].append(key)
         self.size += 1
 
-    def insert(self, key: K) -> bool:
-        from typing import Deque
-
-        success = self._am.insert(key, Deque[K]([key]))
+    def insert(self, key: _K) -> bool:
+        success = self._am.insert(key, deque([key]))
         if success:
             self.size += 1
         return success
 
-    def _popqleft(self, key: K, q: Deque[K]) -> K:
+    def _popqleft(self, key: _K, q: deque[_K]) -> _K:
         value = q.popleft()
         if not len(q):
             del self._am[key]
         self.size -= 1
         return value
 
-    def _popq(self, key: K, q: Deque[K]) -> K:
+    def _popq(self, key: _K, q: deque[_K]) -> _K:
         value = q.pop()
         if not len(q):
             del self._am[key]
         self.size -= 1
         return value
 
-    def remove(self, key: K) -> None:
+    def remove(self, key: _K) -> None:
         self._popqleft(key, self._am[key])
 
-    def discard(self, key: K) -> None:
+    def discard(self, key: _K) -> None:
         try:
             self.remove(key)
         except KeyError:
             pass
 
-    def pop(self) -> K:
+    def pop(self) -> _K:
         return self.popmin()
 
-    def popmin(self) -> K:
+    def popmin(self) -> _K:
         return self._popqleft(*self._am.min())
 
-    def popmax(self) -> K:
+    def popmax(self) -> _K:
         return self._popq(*self._am.max())
 
-    def min(self) -> K:
+    def min(self) -> _K:
         return self._am.min()[1][0]
 
-    def max(self) -> K:
+    def max(self) -> _K:
         return self._am.max()[1][-1]
 
-    def bisect_left(self, key: K) -> Optional[K]:
+    def bisect_left(self, key: _K) -> _K | None:
         ret = self._am.bisect_left(key)
         return None if ret is None else ret[1][0]
 
-    def bisect_right(self, key: K) -> Optional[K]:
+    def bisect_right(self, key: _K) -> _K | None:
         ret = self._am.bisect_right(key)
         return None if ret is None else ret[1][0]
 
@@ -914,10 +873,11 @@ class AVLMultiSet(MutableSet[K]):
         return self._am.dump()
 
 
-def test_avlmap_balanced(s: AVLMap):
-    from typing import Deque
+# --------------------
 
-    q = Deque[AVLNodeBase]()
+
+def test_avlmap_balanced(s: AVLMap):
+    q = deque[AVLNodeBase]()
     q.append(s._root)
     while len(q):
         node = q.pop()
@@ -929,13 +889,12 @@ def test_avlmap_balanced(s: AVLMap):
 
 
 def test_avlmap(num: int = 10000):
-    from random import randint
     import heapq
-    from typing import List, Set
+    from random import randint
 
     values = [randint(-1000, 1000) for _ in range(num)]
-    q: List[int] = []
-    qs: Set[int] = set()
+    q = list[int]()
+    qs = set[int]()
     s = AVLMap[int, int]()
     while len(values):
         if len(q) and randint(0, 1):
@@ -953,14 +912,13 @@ def test_avlmap(num: int = 10000):
 
 
 def test_avlset(num: int = 10000):
-    from random import randint
     import heapq
-    from typing import List, Set
+    from random import randint
 
     values = [randint(-1000, 1000) for _ in range(num)]
-    q: List[int] = []
-    qs: Set[int] = set()
-    s = AVLSet[int]()
+    q = list[int]()
+    qs = set[int]()
+    s = AVLset[int]()
     while len(values):
         if len(q) and randint(0, 1):
             v = s.popmin()
@@ -976,13 +934,12 @@ def test_avlset(num: int = 10000):
 
 
 def test_avlmultiset(num: int = 10000):
-    from random import randint
     import heapq
-    from typing import List
+    from random import randint
 
     values = [randint(-1000, 1000) for _ in range(num)]
-    q: List[int] = []
-    s = AVLMultiSet[int]()
+    q = list[int]()
+    s = AVLMultiset[int]()
     while len(values):
         if len(q) and randint(0, 1):
             assert heapq.heappop(q) == s.pop()

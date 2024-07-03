@@ -6,17 +6,15 @@ class MaxFlowFF:
     """
 
     def __init__(self, n: int):
-        from typing import List
-
         self.n = n
         self.m = 0
-        self.adjs: List[List[int]] = [[] for _ in range(n)]
-        self.frs: List[int] = []
-        self.tos: List[int] = []
-        self.caps: List[int] = []
-        self.rems: List[int] = []
-        self.fws: List[bool] = []
-        self.revs: List[int] = []
+        self.adjs = [list[int]() for _ in range(n)]
+        self.frs = list[int]()
+        self.tos = list[int]()
+        self.caps = list[int]()
+        self.rems = list[int]()
+        self.fws = list[bool]()
+        self.revs = list[int]()
 
     def connect(self, i: int, j: int, cap: int) -> None:
         """i -> j; directed."""
@@ -62,7 +60,7 @@ class MaxFlowFF:
                     q.append(j)
             else:
                 break
-            edges = []
+            edges = list[int]()
             i = t
             while i != s:
                 k = prevs[i]
@@ -83,8 +81,6 @@ class MaxBiMatchFF:
     Maximum bipartite matching based on Ford-Fulkerson
     """
 
-    from typing import Tuple, List
-
     _S = 0
     _T = 1
 
@@ -103,12 +99,10 @@ class MaxBiMatchFF:
         assert 0 <= j < self.nr
         self.mf.connect(2 + i, 2 + self.nl + j, 1)
 
-    def match(self) -> List[Tuple[int, int]]:
+    def match(self) -> list[tuple[int, int]]:
         """O((nl + nr + |E|) max(nl, nr))."""
-        from typing import Tuple, List
-
         flow = self.mf.flow(self._S, self._T)
-        matches: List[Tuple[int, int]] = []
+        matches = list[tuple[int, int]]()
         for k in range(self.mf.m):
             if (
                 not self.mf.fws[k]
@@ -120,3 +114,6 @@ class MaxBiMatchFF:
             matches.append((self.mf.frs[k] - 2, self.mf.tos[k] - 2 - self.nl))
         assert flow == len(matches)
         return matches
+
+
+# --------------------

@@ -1,8 +1,10 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/util_lin.py
-from typing import List
+from typing import Sequence
 
 
-def matmul(a: List[List[int]], b: List[List[int]], mod: int) -> List[List[int]]:
+def matmul(
+    a: Sequence[Sequence[int]], b: Sequence[Sequence[int]], mod: int
+) -> list[list[int]]:
     h = len(a)
     if h == 0:
         return []

@@ -1,4 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/mincostflow.py
+from heapq import heappop, heappush
+
+
 class MinCostFlow:
     """
     @cexen v0.1
@@ -13,21 +16,17 @@ class MinCostFlow:
     ([5, 8], [505, 3535])
     """
 
-    from typing import Tuple, List, Optional
-
     def __init__(self, n: int):
-        from typing import List
-
         self.n = n
         self.m = 0
-        self.adjs: List[List[int]] = [[] for _ in range(n)]
-        self.frs: List[int] = []
-        self.tos: List[int] = []
-        self.caps: List[int] = []
-        self.rems: List[int] = []
-        self.costs: List[int] = []
-        self.fws: List[int] = []
-        self.revs: List[int] = []
+        self.adjs = [list[int]() for _ in range(n)]
+        self.frs = list[int]()
+        self.tos = list[int]()
+        self.caps = list[int]()
+        self.rems = list[int]()
+        self.costs = list[int]()
+        self.fws = list[int]()
+        self.revs = list[int]()
         self.pots = [0] * self.n  # potential
         self.f = self.c = 0
 
@@ -57,23 +56,20 @@ class MinCostFlow:
         self.revs.append(k)
 
     def flow(
-        self, s: int, t: int, limit: Optional[int] = None
-    ) -> Tuple[List[int], List[int]]:
+        self, s: int, t: int, limit: int | None = None
+    ) -> tuple[list[int], list[int]]:
         """O(f m log n) where f = max(flows). f <= limit."""
-        from heapq import heappop, heappush
-        from typing import Tuple, List
-
         assert 0 <= s < self.n
         assert 0 <= t < self.n
 
         pots = self.pots
-        flows: List[int] = []
-        costs: List[int] = []
+        flows = list[int]()
+        costs = list[int]()
         while True:
             dists = [-1] * self.n
             dists[s] = 0  # this requires s != t
             preves = [-1] * self.n
-            q: List[Tuple[int, int]] = [(0, s)]
+            q = list[tuple[int, int]]([(0, s)])
             while q:
                 d, i = heappop(q)
                 if 0 <= dists[i] < d:
@@ -92,7 +88,7 @@ class MinCostFlow:
                 break
             for i in range(self.n):
                 pots[i] += dists[i]
-            edges = []
+            edges = list[int]()
             i = t
             while i != s:
                 k = preves[i]
@@ -165,9 +161,9 @@ def solve_atcoder_abc247_g():
     https://atcoder.jp/contests/abc247/tasks/abc247_g
     """
     N = int(input())
-    A = []
-    B = []
-    C = []
+    A = list[int]()
+    B = list[int]()
+    C = list[int]()
     for _ in range(N):
         a, b, c = map(int, input().split())
         A.append(a - 1)

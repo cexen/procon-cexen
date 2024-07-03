@@ -1,20 +1,18 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/tree_simple.py
+from collections import deque
+
+
 class Tree:
     """v1.1 @cexen"""
 
     def __init__(self, n: int):
-        """
-        adjs: list[list[int]]
-        """
-        from typing import Optional, List
-
         self.n = n
-        self.adjs: List[List[int]] = [[] for _ in range(n)]
-        self.root: Optional[int] = None
-        self.maxdepth: Optional[int] = None
-        self.depths: Optional[List[int]] = None  # list[int]
-        self.parents: Optional[List[List[int]]] = None  # list[list[int]]
-        self.logmaxdepth: Optional[int] = None
+        self.adjs = [list[int]() for _ in range(n)]
+        self.root: int | None = None
+        self.maxdepth: int | None = None
+        self.depths: list[int] | None = None
+        self.parents: list[list[int]] | None = None
+        self.logmaxdepth: int | None = None
 
     def connect(self, i: int, j: int) -> None:
         """O(1). i -> j. DIRECTED."""
@@ -28,12 +26,9 @@ class Tree:
         """
         Prerequisite: none
         """
-        from collections import deque
-        from typing import Deque, Tuple
-
         depths = [-1] * self.n
         parents = [[-1] * self.n]  # [k of 2^k][i]
-        q: Deque[Tuple[int, int, int]] = deque()  # deque[tuple[int, int, int]]
+        q = deque[tuple[int, int, int]]()
         q.append((root, 0, -1))
         i, d = root, 0
         while len(q):
@@ -80,11 +75,11 @@ class Tree:
         if self.depths[u] < self.depths[v]:
             u, v = v, u  # ensures depths[u] >= depths[v]
         for k in range(self.logmaxdepth):
-            if 1 & (self.depths[u] - self.depths[v]) >> k:
+            if 1 & ((self.depths[u] - self.depths[v]) >> k):
                 u = self.parents[k][u]
         if u == v:
             return u
-        for k in range(self.logmaxdepth - 1, -1, -1):
+        for k in reversed(range(self.logmaxdepth)):
             if self.parents[k][u] != self.parents[k][v]:
                 u = self.parents[k][u]
                 v = self.parents[k][v]
@@ -105,3 +100,6 @@ class Tree:
         _, _, _, one_end = self.locate_all_from_root(root, save)
         diameter, _, _, other_end = self.locate_all_from_root(one_end, save=False)
         return diameter, one_end, other_end
+
+
+# --------------------

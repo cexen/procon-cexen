@@ -1,5 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/rolling_hash.py
-from typing import Iterable, Optional, List
+from collections.abc import Iterable
+from math import gcd
+from random import randrange
 
 
 class RollingHash:
@@ -43,9 +45,6 @@ class RollingHash:
         Generates a random base (> minval).
         cf. https://trap.jp/post/1036/
         """
-        from math import gcd
-        from random import randrange
-
         mod = (1 << 61) - 1
         assert minval < mod // 2
         r = 37
@@ -58,7 +57,7 @@ class RollingHash:
                 break
         return base
 
-    def calc(self, iter: Iterable[int]) -> List[int]:
+    def calc(self, iter: Iterable[int]) -> list[int]:
         """
         O(len(iter)).
         Returns hashes of [iter[:0], iter[:1], ..., iter[:len(iter)]].
@@ -72,7 +71,7 @@ class RollingHash:
         self._cache_bs(len(hashes))
         return hashes
 
-    def slice(self, hashes: List[int], i: int = 0, j: Optional[int] = None) -> int:
+    def slice(self, hashes: list[int], i: int = 0, j: int | None = None) -> int:
         """Returns hash of iter[i:j]."""
         if j is None:
             j = len(hashes) - 1
@@ -152,3 +151,6 @@ class RollingHash:
         elif ans >= mod:
             ans -= mod
         return ans
+
+
+# --------------------

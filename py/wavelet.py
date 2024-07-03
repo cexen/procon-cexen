@@ -22,7 +22,9 @@ def popcount(n: int) -> int:
     return s
 
 
-from typing import Sequence, Iterable, Optional, Union, Tuple, List, overload
+from collections.abc import Iterable, Sequence
+from heapq import heappop, heappush
+from typing import overload
 
 
 class UnsuccinctBV(Sequence[int]):
@@ -75,13 +77,11 @@ class UnsuccinctBV(Sequence[int]):
 
     def __init__(self, bits: Iterable[int]):
         """O(len(bits))."""
-        from typing import List
-
         bits_ = list(bits)
         self.n = len(bits_)
         self.r1 = r1 = [0] * (self.n + 1)
-        self.s0: List[int] = []
-        self.s1: List[int] = []
+        self.s0 = list[int]()
+        self.s1 = list[int]()
         for i, v in enumerate(bits_):
             r1[i + 1] = r1[i] + v
             if v:
@@ -99,11 +99,11 @@ class UnsuccinctBV(Sequence[int]):
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[int]:
+    def __getitem__(self, i: slice) -> list[int]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
+    def __getitem__(self, i: int | slice) -> int | list[int]:
         if isinstance(i, slice):
             return [self[j] for j in range(len(self))[i]]
         if not 0 <= i < self.n:
@@ -119,7 +119,7 @@ class UnsuccinctBV(Sequence[int]):
         """O(1). Returns self[:j].count(0)."""
         return j - self.rank1(j)
 
-    def rankall(self, j: int) -> Tuple[int, int]:
+    def rankall(self, j: int) -> tuple[int, int]:
         """O(1). Returns (self[:j].count(0), self[:j].count(1))."""
         k = self.rank1(j)
         return j - k, k
@@ -245,11 +245,11 @@ class SuccinctBV(Sequence[int]):
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[int]:
+    def __getitem__(self, i: slice) -> list[int]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
+    def __getitem__(self, i: int | slice) -> int | list[int]:
         if isinstance(i, slice):
             return [self[j] for j in range(len(self))[i]]
         if not 0 <= i < self.n:
@@ -269,7 +269,7 @@ class SuccinctBV(Sequence[int]):
         """O(1). Returns self[:j].count(0)."""
         return j - self.rank1(j)
 
-    def rankall(self, j: int) -> Tuple[int, int]:
+    def rankall(self, j: int) -> tuple[int, int]:
         """O(1). Returns (self[:j].count(0), self[:j].count(1))."""
         k = self.rank1(j)
         return j - k, k
@@ -385,7 +385,7 @@ class WaveletMatrix(Sequence[int]):
     [(1, 2, 1), (4, 1, 1), (5, 1, 1)]
     """
 
-    def __init__(self, iterable: Iterable[int], bitlen: Optional[int] = None):
+    def __init__(self, iterable: Iterable[int], bitlen: int | None = None):
         """
         O(n * bitlen) where n == len(iterable).
         If bitlen omitted: bitlen = (1 + max(iterable)).bit_length().
@@ -395,12 +395,12 @@ class WaveletMatrix(Sequence[int]):
         if bitlen is None:
             # ensure `max(tab) < self.inf == (1 << bitlen) - 1`
             bitlen = (1 + max(tab, default=0)).bit_length()
-        matrix: List[UnsuccinctBV] = []
-        num0s: List[int] = []
+        matrix = list[UnsuccinctBV]()
+        num0s = list[int]()
         for ib in reversed(range(bitlen)):
             bits = [(v >> ib) & 1 for v in tab]
-            zeros: List[int] = []
-            ones: List[int] = []
+            zeros = list[int]()
+            ones = list[int]()
             for v, b in zip(tab, bits):
                 if b:
                     ones.append(v)
@@ -426,11 +426,11 @@ class WaveletMatrix(Sequence[int]):
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[int]:
+    def __getitem__(self, i: slice) -> list[int]:
         """O(bitlen * len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
+    def __getitem__(self, i: int | slice) -> int | list[int]:
         if isinstance(i, slice):
             return [self[k] for k in range(len(self))[i]]
         if not 0 <= i < len(self):
@@ -521,7 +521,7 @@ class WaveletMatrix(Sequence[int]):
         assert 0 <= k < j - i
         return ans
 
-    def topk(self, i: int, j: int, k: Optional[int] = None) -> List[Tuple[int, int]]:
+    def topk(self, i: int, j: int, k: int | None = None) -> list[tuple[int, int]]:
         """
         O(bitlen + m log m) where m = len(set(self[i:j])).
         Returns Counter(self[i:j]).most_common(k).
@@ -529,9 +529,6 @@ class WaveletMatrix(Sequence[int]):
         Returns all values if k is None.
         Note that 0 <= len(keys) <= k; not necessarily == k if not found.
         """
-        from heapq import heappop, heappush
-        from typing import Tuple, List
-
         assert 0 <= i <= j <= len(self)
         if k is None:
             k = j - i
@@ -539,8 +536,8 @@ class WaveletMatrix(Sequence[int]):
 
         if k == 0:
             return []
-        q = [(-(j - i), 0, 0, i, j)]
-        ans: List[Tuple[int, int]] = []
+        q = list[tuple[int, int, int, int, int]]([(-(j - i), 0, 0, i, j)])
+        ans = list[tuple[int, int]]()
         while q:
             _, v, ib, i, j = heappop(q)
             if ib == self.bitlen:
@@ -566,7 +563,7 @@ class WaveletMatrix(Sequence[int]):
         """
         return sum(v * c for v, c in self.topk(i, j)) if i < j else 0
 
-    def rangefreq(self, i: int, j: int, x: int = 0, y: Optional[int] = None) -> int:
+    def rangefreq(self, i: int, j: int, x: int = 0, y: int | None = None) -> int:
         """O(bitlen). Returns len([v for v in self[i:j] if x <= v < y])."""
         assert 0 <= i <= j <= len(self)  # accept i == len(self) for len(self) == 0
         if y is None:
@@ -597,17 +594,15 @@ class WaveletMatrix(Sequence[int]):
         i: int,
         j: int,
         x: int = 0,
-        y: Optional[int] = None,
-        k: Optional[int] = None,
+        y: int | None = None,
+        k: int | None = None,
         reverse: bool = False,
-    ) -> List[Tuple[int, int]]:
+    ) -> list[tuple[int, int]]:
         """
         O(bitlen + k).
         Returns sorted(Counter([v for v in self[i:j] if x <= v < y]).items(), reverse=reverse)[:k].
         (value, count) WHERE x <= value < y LIMIT k ORDER BY value {DESC if reverse else ASC}.
         """
-        from typing import Tuple, List
-
         assert 0 <= i <= j <= len(self)
         if y is None:
             y = self.inf
@@ -619,9 +614,8 @@ class WaveletMatrix(Sequence[int]):
 
         if k == 0:
             return []
-        TypeQ = List[Tuple[int, int, int, int, int, int]]
-        q: TypeQ = [(0, 0, i, j, 0, 0)]
-        ans: List[Tuple[int, int]] = []
+        q = list[tuple[int, int, int, int, int, int]]([(0, 0, i, j, 0, 0)])
+        ans = list[tuple[int, int]]()
         while q:
             v, ib, i, j, gtx, lty = q.pop()
             if ib == self.bitlen:
@@ -637,7 +631,7 @@ class WaveletMatrix(Sequence[int]):
             r0, r1 = bv.rankall(j)
             x_is_0 = (x >> nib) & 1 ^ 1
             y_is_1 = (y >> nib) & 1
-            nq: TypeQ = []
+            nq = list[tuple[int, int, int, int, int, int]]()
             if l1 < r1 and (lty or y_is_1):
                 l1 += num0
                 r1 += num0
@@ -649,9 +643,7 @@ class WaveletMatrix(Sequence[int]):
             q.extend(nq)
         return ans
 
-    def rangemaxk(
-        self, i: int, j: int, k: Optional[int] = None
-    ) -> List[Tuple[int, int]]:
+    def rangemaxk(self, i: int, j: int, k: int | None = None) -> list[tuple[int, int]]:
         """
         O(bitlen + k).
         Returns [(v, self.count(v)) for v in sorted(self[i:j], reversed=True)[:k]].
@@ -659,9 +651,7 @@ class WaveletMatrix(Sequence[int]):
         """
         return self.rangelist(i, j, k=k, reverse=True)
 
-    def rangemink(
-        self, i: int, j: int, k: Optional[int] = None
-    ) -> List[Tuple[int, int]]:
+    def rangemink(self, i: int, j: int, k: int | None = None) -> list[tuple[int, int]]:
         """
         O(bitlen + k).
         Returns [(v, self.count(v)) for v in sorted(self[i:j])[:k]].
@@ -669,7 +659,7 @@ class WaveletMatrix(Sequence[int]):
         """
         return self.rangelist(i, j, k=k)
 
-    def prevvalue(self, i: int, j: int, x: int, y: int) -> Tuple[int, int]:
+    def prevvalue(self, i: int, j: int, x: int, y: int) -> tuple[int, int]:
         """
         O(bitlen).
         Returns (v, self[i:j].count(v)) where v = max(v for v in self[i:j] if x <= v < y).
@@ -678,7 +668,7 @@ class WaveletMatrix(Sequence[int]):
         ans = self.rangelist(i, j, x, y, k=1, reverse=True)
         return ans[0] if len(ans) else (y, 0)
 
-    def nextvalue(self, i: int, j: int, x: int, y: int) -> Tuple[int, int]:
+    def nextvalue(self, i: int, j: int, x: int, y: int) -> tuple[int, int]:
         """
         O(bitlen).
         Returns (v, self[i:j].count(v)) where v = min(v for v in self[i:j] if x <= v < y).
@@ -689,21 +679,18 @@ class WaveletMatrix(Sequence[int]):
 
     def intersect(
         self, i1: int, j1: int, i2: int, j2: int
-    ) -> List[Tuple[int, int, int]]:
+    ) -> list[tuple[int, int, int]]:
         """
         O(bitlen + j1-i1 + j2-i2).
         Returns [(v, l1.count(v), l2.count(v)) for v in sorted(set(l1) & set(l2))],
         where l1, l2 = self[i1:j1], self[i2:j2].
         (value, count1, count2) ORDER BY value ASC.
         """
-        from typing import Tuple, List
-
         assert 0 <= i1 <= j1 <= len(self)
         assert 0 <= i2 <= j2 <= len(self)
 
-        TypeQ = List[Tuple[int, int, int, int, int, int]]
-        q: TypeQ = [(0, 0, i1, j1, i2, j2)]
-        ans: List[Tuple[int, int, int]] = []
+        q = list[tuple[int, int, int, int, int, int]]([(0, 0, i1, j1, i2, j2)])
+        ans = list[tuple[int, int, int]]()
         while q:
             v, ib, i1, j1, i2, j2 = q.pop()
             if ib == self.bitlen:
@@ -735,7 +722,7 @@ def solve_yosupojudge_rank():
     # https://judge.yosupo.jp/problem/static_range_frequency
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    ans = []
+    ans = list[int]()
     wav = WaveletMatrix(A)
     for _ in range(Q):
         l, r, x = map(int, input().split())
@@ -749,7 +736,7 @@ def solve_yosupojudge_rangefreq():
     # https://judge.yosupo.jp/problem/static_range_frequency
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    ans = []
+    ans = list[int]()
     wav = WaveletMatrix(A)
     for _ in range(Q):
         l, r, x = map(int, input().split())
@@ -763,7 +750,7 @@ def solve_yosupojudge_quantile():
     # https://judge.yosupo.jp/problem/range_kth_smallest
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    ans = []
+    ans = list[int]()
     wav = WaveletMatrix(A)
     for _ in range(Q):
         l, r, k = map(int, input().split())

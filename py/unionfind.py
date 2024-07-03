@@ -67,20 +67,17 @@ class UnionFind:
             # weights[i] += weights[j]
 
 
-from typing import TypeVar, Generic, Protocol
+from typing import Generic, Protocol, TypeVar
 
 Self = TypeVar("Self")
 
 
 class SupportsAddSubNeg(Protocol):
-    def __add__(self: Self, other: Self, /) -> Self:
-        ...
+    def __add__(self: Self, other: Self, /) -> Self: ...
 
-    def __sub__(self: Self, other: Self, /) -> Self:
-        ...
+    def __sub__(self: Self, other: Self, /) -> Self: ...
 
-    def __neg__(self: Self) -> Self:
-        ...
+    def __neg__(self: Self) -> Self: ...
 
 
 _T = TypeVar("_T", bound=SupportsAddSubNeg)
@@ -184,7 +181,7 @@ def solve_yosupojudge_unionfind():
     """
     N, Q = map(int, input().split())
     dst = UnionFind(N)
-    ans = []
+    ans = list[int]()
     for _ in range(Q):
         t, u, v = map(int, input().split())
         if t == 0:

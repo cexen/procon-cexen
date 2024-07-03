@@ -1,5 +1,9 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/mint.py
 from numbers import Number
+from typing import SupportsInt, TypeAlias
+
+# https://stackoverflow.com/questions/39505379/whats-the-type-hint-for-can-be-converted-to-mean
+AcceptableToInt: TypeAlias = SupportsInt | str | bytes | bytearray
 
 
 class Mint(Number):
@@ -17,17 +21,12 @@ class Mint(Number):
     CACHE_FACTORIALS = [1, 1]
     __slots__ = ("v",)
 
-    from typing import SupportsInt, Union
-
-    # https://stackoverflow.com/questions/39505379/whats-the-type-hint-for-can-be-converted-to-mean
-    AcceptableToInt = Union[SupportsInt, str, bytes, bytearray]
-
     def __init__(self, v: AcceptableToInt):
         self.v = int(v) % self.MOD
 
     @property
     def inv(self):
-        return self ** (self.MOD - 2)
+        return self**-1
 
     @classmethod
     def factorial(cls, v: AcceptableToInt):
@@ -59,7 +58,7 @@ class Mint(Number):
         return hash(self.v)
 
     def __eq__(self, w: object) -> bool:
-        return isinstance(w, self.__class__.AcceptableToInt) and self.v == int(w)
+        return isinstance(w, AcceptableToInt) and self.v == int(w)
 
     def __neg__(self):
         return self.__class__(-self.v)
@@ -97,3 +96,6 @@ class Mint(Number):
 
     def __rpow__(self, u: AcceptableToInt):
         return self.__class__(u) ** self
+
+
+# --------------------

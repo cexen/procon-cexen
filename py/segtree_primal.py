@@ -1,12 +1,14 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/segtree_primal.py
 import operator
-from typing import TypeVar, Sequence, Iterable, Optional, Deque, Set, cast
+from bisect import bisect_right
+from collections import defaultdict, deque
+from collections.abc import Callable, Iterable, Sequence
+from typing import TypeVar, cast, overload
+
+_V = TypeVar("_V")
 
 
-V_ = TypeVar("V_")
-
-
-class SegtreePrimal(Sequence[V_]):
+class SegtreePrimal(Sequence[_V]):
     """
     v1.9 @cexen
     >>> st = SegtreePrimal[int](4, f=operator.add, e=0)
@@ -30,9 +32,7 @@ class SegtreePrimal(Sequence[V_]):
     2
     """
 
-    from typing import Iterable, Callable, Union, Optional, List, Deque, Set, overload
-
-    def __init__(self, n: int, f: Callable[[V_, V_], V_], e: V_):
+    def __init__(self, n: int, f: Callable[[_V, _V], _V], e: _V):
         """all(f(v, e) == f(e, v) == v for v in data)"""
         self.r = range(n)
         self.size = 1 << (n - 1).bit_length()
@@ -46,7 +46,7 @@ class SegtreePrimal(Sequence[V_]):
     def __repr__(self) -> str:
         return repr(self[:])
 
-    def grasp(self, i: int = 0, j: Optional[int] = None) -> V_:
+    def grasp(self, i: int = 0, j: int | None = None) -> _V:
         """O(log n). reduce(f, data[i:j], e)."""
         if j is None:
             j = len(self)
@@ -56,8 +56,8 @@ class SegtreePrimal(Sequence[V_]):
         i = self.size - 1 + r_[0]
         j = self.size - 1 + r_[-1] + 1
 
-        vl = []
-        vr = []
+        vl = list[_V]()
+        vr = list[_V]()
         while i < j:
             if i & 1 == 0:
                 vl.append(self.tree[i])
@@ -73,16 +73,16 @@ class SegtreePrimal(Sequence[V_]):
         return ans
 
     @overload
-    def __getitem__(self, i: int) -> V_:
+    def __getitem__(self, i: int) -> _V:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[V_]:
+    def __getitem__(self, i: slice) -> list[_V]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[V_, List[V_]]:
+    def __getitem__(self, i: int | slice) -> _V | list[_V]:
         r = self.r[i]
         if isinstance(r, int):
             return self.tree[self.size - 1 + r]
@@ -90,19 +90,19 @@ class SegtreePrimal(Sequence[V_]):
             return [self.tree[self.size - 1 + ri] for ri in r]
 
     @overload
-    def __setitem__(self, i: int, v: V_) -> None:
+    def __setitem__(self, i: int, v: _V) -> None:
         """O(log n)."""
         ...
 
     @overload
-    def __setitem__(self, i: slice, v: Iterable[V_]) -> None:
+    def __setitem__(self, i: slice, v: Iterable[_V]) -> None:
         """O(len(i) log n). Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, i: Union[int, slice], v: Union[V_, Iterable[V_]]) -> None:
+    def __setitem__(self, i: int | slice, v: _V | Iterable[_V]) -> None:
         if isinstance(i, int):
             j = self.size - 1 + self.r[i]
-            self.tree[j] = cast(V_, v)
+            self.tree[j] = cast(_V, v)
             j = (j - 1) >> 1
             while j >= 0:
                 vl = self.tree[(j << 1) + 1]
@@ -112,8 +112,8 @@ class SegtreePrimal(Sequence[V_]):
         else:
             r = self.r[i]
             assert isinstance(v, Iterable)
-            q = Deque[int]()
-            s: Set[int] = set()
+            q = deque[int]()
+            s = set[int]()
             for ri, vi in zip(r, v):
                 j = self.size - 1 + ri
                 self.tree[j] = vi
@@ -137,7 +137,7 @@ class SegtreePrimal(Sequence[V_]):
             vr = self.tree[(j << 1) + 2]
             self.tree[j] = self.f(vl, vr)
 
-    def setall(self, values: Iterable[V_]) -> None:
+    def setall(self, values: Iterable[_V]) -> None:
         """O(n). Faster than self[:] = values."""
         j = -1
         off = self.size - 1
@@ -148,7 +148,7 @@ class SegtreePrimal(Sequence[V_]):
             self.tree[off + j] = self.e
         self._rebuild()
 
-    def max_right(self, g: Callable[[V_], bool], l: int = 0) -> int:
+    def max_right(self, g: Callable[[_V], bool], l: int = 0) -> int:
         """
         O(log n). Returns one r s.t. l <= r <= n and g(grasp(l, r)) and not g(grasp(l, r+1)).
         g(e) is not calculated but assumed to be True.
@@ -176,7 +176,7 @@ class SegtreePrimal(Sequence[V_]):
             if (r & -r) == r:
                 return len(self)
 
-    def min_left(self, g: Callable[[V_], bool], r: Optional[int] = None):
+    def min_left(self, g: Callable[[_V], bool], r: int | None = None):
         """
         O(log n). Returns one l s.t. 0 <= l <= r and g(grasp(l, r)) and not g(grasp(l-1, r)).
         g(e) is not calculated but assumed to be True.
@@ -208,22 +208,18 @@ class SegtreePrimal(Sequence[V_]):
 
 
 class SegtreePrimalInt(SegtreePrimal[int]):
-    from typing import Callable
-
     def __init__(self, n: int, f: Callable[[int, int], int] = operator.add, e: int = 0):
         super().__init__(n, f, e)
 
 
-class Segtree2DPrimal(Sequence[Sequence[V_]]):
+class Segtree2DPrimal(Sequence[Sequence[_V]]):
     """
     v1.5 @cexen
     """
 
-    from typing import Iterable, Callable, Union, Optional, List, Tuple, overload
+    Index = int | slice
 
-    Index = Union[int, slice]
-
-    def __init__(self, h: int, w: int, f: Callable[[V_, V_], V_], e: V_):
+    def __init__(self, h: int, w: int, f: Callable[[_V, _V], _V], e: _V):
         """all(f(v, e) == f(e, v) == v for v in data)"""
         self.ry = range(h)
         self.rx = range(w)
@@ -243,13 +239,10 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         self,
         yl: int = 0,
         xl: int = 0,
-        yr: Optional[int] = None,
-        xr: Optional[int] = None,
-    ) -> V_:
+        yr: int | None = None,
+        xr: int | None = None,
+    ) -> _V:
         """O(log h log w). reduce(f, data[yl:yr, xl:xr], e)."""
-
-        from typing import List, Callable
-
         if yr is None:
             yr = len(self.ry)
         if xr is None:
@@ -264,10 +257,10 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         xr = self.sizex - 1 + rx_[-1] + 1
 
         def graspx(
-            tree: List[V_], f: Callable[[V_, V_], V_], e: V_, i: int, j: int
-        ) -> V_:
-            vl = []
-            vr = []
+            tree: list[_V], f: Callable[[_V, _V], _V], e: _V, i: int, j: int
+        ) -> _V:
+            vl = list[_V]()
+            vr = list[_V]()
             while i < j:
                 if i & 1 == 0:
                     vl.append(tree[i])
@@ -282,8 +275,8 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
                 ans = f(ans, v)
             return ans
 
-        vl = []
-        vr = []
+        vl = list[_V]()
+        vr = list[_V]()
         while yl < yr:
             if yl & 1 == 0:
                 ansx = graspx(self.tree[yl], self.f, self.e, xl, xr)
@@ -301,38 +294,38 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         return ans
 
     @overload
-    def __getitem__(self, yx: Tuple[int, int]) -> V_:
+    def __getitem__(self, yx: tuple[int, int]) -> _V:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, y: int) -> List[V_]:
+    def __getitem__(self, y: int) -> list[_V]:
         """O(w)."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[int, slice]) -> List[V_]:
+    def __getitem__(self, yx: tuple[int, slice]) -> list[_V]:
         """O(len(x))."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[slice, int]) -> List[V_]:
+    def __getitem__(self, yx: tuple[slice, int]) -> list[_V]:
         """O(len(y))."""
         ...
 
     @overload
-    def __getitem__(self, y: slice) -> List[List[V_]]:
+    def __getitem__(self, y: slice) -> list[list[_V]]:
         """O(len(y) * w)."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[slice, slice]) -> List[List[V_]]:
+    def __getitem__(self, yx: tuple[slice, slice]) -> list[list[_V]]:
         """O(len(y) * len(x))."""
         ...
 
     def __getitem__(  # type: ignore
-        self, yx: Union[Index, Tuple[Index, Index]]
-    ) -> Union[V_, List[V_], List[List[V_]]]:
+        self, yx: Index | tuple[Index, Index]
+    ) -> _V | list[_V] | list[list[_V]]:
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
         y, x = yx
@@ -345,33 +338,31 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
         return self.tree[self.sizey - 1 + ry][self.sizex - 1 + rx]
 
     @overload
-    def __setitem__(self, yx: Tuple[int, int], v: V_) -> None:
+    def __setitem__(self, yx: tuple[int, int], v: _V) -> None:
         """O(log h log w)."""
         ...
 
     @overload
-    def __setitem__(self, y: int, v: Iterable[V_]) -> None:
+    def __setitem__(self, y: int, v: Iterable[_V]) -> None:
         """O(w log h log w)."""
         ...
 
     @overload
-    def __setitem__(self, yx: Tuple[int, slice], v: Iterable[V_]) -> None:
+    def __setitem__(self, yx: tuple[int, slice], v: Iterable[_V]) -> None:
         """O(len(x) log h log w). Extra elements will be ignored."""
         ...
 
     @overload
-    def __setitem__(self, y: slice, v: Iterable[Iterable[V_]]) -> None:
+    def __setitem__(self, y: slice, v: Iterable[Iterable[_V]]) -> None:
         """O(len(y) w log h log w). Extra elements will be ignored."""
         ...
 
     @overload
-    def __setitem__(self, y: Tuple[slice, slice], v: Iterable[Iterable[V_]]) -> None:
+    def __setitem__(self, y: tuple[slice, slice], v: Iterable[Iterable[_V]]) -> None:
         """O(len(y) len(x) log h log w). Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:  # type: ignore
-        from typing import Deque, Set
-
+    def __setitem__(self, yx: Index | tuple[Index, Index], v) -> None:  # type: ignore
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
         y, x = yx
@@ -388,10 +379,10 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
 
         w = 2 * self.sizex
 
-        q = Deque[int]()
-        s: Set[int] = set()
+        q = deque[int]()
+        s = set[int]()
 
-        def addnext(q: Deque[int], s: Set[int], i: int, j: int):
+        def addnext(q: deque[int], s: set[int], i: int, j: int):
             ni = (i - 1) >> 1
             nj = (j - 1) >> 1
             nk = ni * w + j
@@ -446,7 +437,7 @@ class Segtree2DPrimal(Sequence[Sequence[V_]]):
                 vrr = self.tree[(i << 1) + 2][(j << 1) + 2]
                 self.tree[i][j] = self.f(self.f(vll, vlr), self.f(vrl, vrr))
 
-    def setall(self, values: Iterable[Iterable[V_]]) -> None:
+    def setall(self, values: Iterable[Iterable[_V]]) -> None:
         """O(h*w). Faster than self[:, :] = values."""
         i = -1
         offy = self.sizey - 1
@@ -479,22 +470,18 @@ class Segtree2DPrimalInt(Segtree2DPrimal[int]):
     13
     """
 
-    from typing import Callable
-
     def __init__(
         self, h: int, w: int, f: Callable[[int, int], int] = operator.add, e: int = 0
     ):
         super().__init__(h, w, f, e)
 
 
-class SegtreePrimalCompress(SegtreePrimal[V_]):
+class SegtreePrimalCompress(SegtreePrimal[_V]):
     """
     v1.2 @cexen
     """
 
-    from typing import Iterable, Callable, Union, Optional, List, overload
-
-    def __init__(self, indices: Iterable[int], f: Callable[[V_, V_], V_], e: V_):
+    def __init__(self, indices: Iterable[int], f: Callable[[_V, _V], _V], e: _V):
         """all(f(v, e) == f(e, v) == v for v in data)"""
         _indices = sorted(set(indices))
         n = len(_indices)
@@ -502,10 +489,8 @@ class SegtreePrimalCompress(SegtreePrimal[V_]):
         self.indices = _indices
         self.vi = {v: i for i, v in enumerate(_indices)}
 
-    def grasp(self, i: Optional[int] = None, j: Optional[int] = None) -> V_:
+    def grasp(self, i: int | None = None, j: int | None = None) -> _V:
         """O(log n). reduce(f, data[i:j], e)."""
-        from bisect import bisect_right
-
         if i is None:
             i = 0
         else:
@@ -517,23 +502,20 @@ class SegtreePrimalCompress(SegtreePrimal[V_]):
         return super().grasp(i, j)
 
     @overload
-    def __getitem__(self, k: int) -> V_:
+    def __getitem__(self, k: int) -> _V:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, k: slice) -> List[V_]:
+    def __getitem__(self, k: slice) -> list[_V]:
         """
         O(len(k) + log n). Requires that k.step == 1.
         Note that len(return value) might not be == len(i).
         """
         ...
 
-    def __getitem__(self, k: Union[int, slice]) -> Union[V_, List[V_]]:
-        from bisect import bisect_right
-        from typing import Union
-
-        i: Union[int, slice, None]
+    def __getitem__(self, k: int | slice) -> _V | list[_V]:
+        i: int | slice | None
         if isinstance(k, int):
             i = self.vi.get(k)
             if i is None:
@@ -553,20 +535,17 @@ class SegtreePrimalCompress(SegtreePrimal[V_]):
         return super().__getitem__(i)
 
     @overload
-    def __setitem__(self, k: int, v: V_) -> None:
+    def __setitem__(self, k: int, v: _V) -> None:
         """O(log n)."""
         ...
 
     @overload
-    def __setitem__(self, k: slice, v: Iterable[V_]) -> None:
+    def __setitem__(self, k: slice, v: Iterable[_V]) -> None:
         """O(len(k) + log n). Requires that k.step == 1. Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, k: Union[int, slice], v: Union[V_, Iterable[V_]]) -> None:
-        from bisect import bisect_right
-        from typing import Union
-
-        i: Union[int, slice, None]
+    def __setitem__(self, k: int | slice, v: _V | Iterable[_V]) -> None:
+        i: int | slice
         if isinstance(k, int):
             i = self.vi[k]
         elif isinstance(k, slice):
@@ -606,8 +585,6 @@ class SegtreePrimalCompressInt(SegtreePrimalCompress[int]):
     110
     """
 
-    from typing import Iterable, Callable
-
     def __init__(
         self,
         indices: Iterable[int],
@@ -617,34 +594,22 @@ class SegtreePrimalCompressInt(SegtreePrimalCompress[int]):
         super().__init__(indices, f, e)
 
 
-class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
+class Segtree2DPrimalCompress(Sequence[Sequence[_V]]):
     """
     v1.3 @cexen
     Based on: https://blog.hamayanhamayan.com/entry/2017/12/09/015937
     """
 
-    from typing import (
-        Iterable,
-        Callable,
-        Union,
-        Optional,
-        List,
-        Tuple,
-        overload,
-    )
-
-    Index = Union[int, slice]
+    Index = int | slice
 
     def __init__(
-        self, yxs: Iterable[Tuple[int, int]], f: Callable[[V_, V_], V_], e: V_
+        self, yxs: Iterable[tuple[int, int]], f: Callable[[_V, _V], _V], e: _V
     ):
         """
         yxs: all possible (y, x)s on subsequent operate((yl, xl), (yr, xr)) and __getitem__((y, x)).
         Other (y, x)s may cause incorrect answers.
         """
-        from typing import DefaultDict, List
-
-        d = DefaultDict[int, List[int]](list)
+        d = defaultdict[int, list[int]](list)
         for yi, xi in sorted(set(yxs)):
             d[yi].append(xi)
         self.ys = list(d.keys())
@@ -654,8 +619,8 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         self.e = e
         self.yi = {y: i for i, y in enumerate(self.ys)}
 
-        self.tree = [SegtreePrimalCompress[V_]([], f, e)] * (self.ysize - len(self.ys))
-        self.tree += [SegtreePrimalCompress[V_](x, f, e) for x in reversed(self.xs)]  # type: ignore
+        self.tree = [SegtreePrimalCompress[_V]([], f, e)] * (self.ysize - len(self.ys))
+        self.tree += [SegtreePrimalCompress[_V](x, f, e) for x in reversed(self.xs)]  # type: ignore
         n = 2 * self.ysize - 1
         for i in reversed(range(self.ysize - 1)):
             if not 0 <= n - 1 - ((i << 1) + 1) < len(self.tree):
@@ -663,7 +628,7 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
             st1 = self.tree[n - 1 - ((i << 1) + 1)]
             st2 = self.tree[n - 1 - ((i << 1) + 2)]
             x = sorted(set(st1.indices + st2.indices))
-            st = SegtreePrimalCompress[V_](x, f, e)
+            st = SegtreePrimalCompress[_V](x, f, e)
             self.tree.append(st)
         self.tree.reverse()
 
@@ -674,14 +639,12 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
 
     def grasp(
         self,
-        yl: Optional[int] = None,
-        xl: Optional[int] = None,
-        yr: Optional[int] = None,
-        xr: Optional[int] = None,
-    ) -> V_:
+        yl: int | None = None,
+        xl: int | None = None,
+        yr: int | None = None,
+        xr: int | None = None,
+    ) -> _V:
         """O(log h log w). reduce(f, data[yl:yr, xl:xr], e)."""
-        from bisect import bisect_right
-
         if yl is None:
             i = 0
         else:
@@ -693,8 +656,8 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         i += self.ysize - 1
         j += self.ysize - 1
 
-        vl = []
-        vr = []
+        vl = list[_V]()
+        vr = list[_V]()
         while i < j:
             if not i & 1:
                 vl.append(self.tree[i].grasp(xl, xr))
@@ -710,48 +673,45 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
         return ans
 
     @overload
-    def __getitem__(self, yx: Tuple[int, int]) -> V_:
+    def __getitem__(self, yx: tuple[int, int]) -> _V:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, y: int) -> List[V_]:
+    def __getitem__(self, y: int) -> list[_V]:
         """O(w)."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[int, slice]) -> List[V_]:
+    def __getitem__(self, yx: tuple[int, slice]) -> list[_V]:
         """O(len(x) + log w)."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[slice, int]) -> List[V_]:
+    def __getitem__(self, yx: tuple[slice, int]) -> list[_V]:
         """O(len(y) + log h)."""
         ...
 
     @overload
-    def __getitem__(self, y: slice) -> List[List[V_]]:
+    def __getitem__(self, y: slice) -> list[list[_V]]:
         """O(len(y) * w + log h)."""
         ...
 
     @overload
-    def __getitem__(self, yx: Tuple[slice, slice]) -> List[List[V_]]:
+    def __getitem__(self, yx: tuple[slice, slice]) -> list[list[_V]]:
         """O(len(y) * len(x) + log wh)."""
         ...
 
     def __getitem__(  # type: ignore
-        self, yx: Union[Index, Tuple[Index, Index]]
-    ) -> Union[V_, List[V_], List[List[V_]]]:
-        from bisect import bisect_right
-        from typing import Union, List
-
+        self, yx: Index | tuple[Index, Index]
+    ) -> _V | list[_V] | list[list[_V]]:
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
         y, x = yx
         if isinstance(y, int):
             i = self.yi.get(y)
             if i is None:
-                ans: Union[V_, List[V_]] = self.e if isinstance(x, int) else []
+                ans = self.e if isinstance(x, int) else list[_V]()
                 return ans
             return self.tree[self.ysize - 1 + i][x]
         elif isinstance(y, slice):
@@ -768,37 +728,35 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
             raise TypeError
 
     @overload
-    def __setitem__(self, yx: Tuple[int, int], v: V_) -> None:
+    def __setitem__(self, yx: tuple[int, int], v: _V) -> None:
         """O(log h log w)."""
         ...
 
     @overload
-    def __setitem__(self, y: int, v: Iterable[V_]) -> None:
+    def __setitem__(self, y: int, v: Iterable[_V]) -> None:
         """O(w log h log w)."""
         ...
 
     @overload
-    def __setitem__(self, yx: Tuple[int, slice], v: Iterable[V_]) -> None:
+    def __setitem__(self, yx: tuple[int, slice], v: Iterable[_V]) -> None:
         """O(len(x) log h log w). Extra elements will be ignored."""
         ...
 
     @overload
-    def __setitem__(self, y: slice, v: Iterable[Iterable[V_]]) -> None:
+    def __setitem__(self, y: slice, v: Iterable[Iterable[_V]]) -> None:
         """O(len(y) w log h log w). Extra elements will be ignored."""
         ...
 
     @overload
-    def __setitem__(self, y: Tuple[slice, slice], v: Iterable[Iterable[V_]]) -> None:
+    def __setitem__(self, y: tuple[slice, slice], v: Iterable[Iterable[_V]]) -> None:
         """O(len(y) len(x) log h log w). Extra elements will be ignored."""
         ...
 
-    def __setitem__(self, yx: Union[Index, Tuple[Index, Index]], v) -> None:  # type: ignore
-        from bisect import bisect_right
-
+    def __setitem__(self, yx: Index | tuple[Index, Index], v) -> None:  # type: ignore
         if not isinstance(yx, tuple):
             yx = (yx, slice(None))
         y, x = yx
-        j: Optional[int]
+        j: int | None
         if isinstance(y, int):
             j = self.ysize - 1 + self.yi[y]
             self.tree[j][x] = v
@@ -823,8 +781,8 @@ class Segtree2DPrimalCompress(Sequence[Sequence[V_]]):
             if j is None:
                 j = bisect_right(self.ys, y.stop - 1)
             r = range(i, j)
-            q = Deque[int]()
-            s: Set[int] = set()
+            q = deque[int]()
+            s = set[int]()
             for ri, vi in zip(r, v):
                 j = self.ysize - 1 + ri
                 self.tree[j][x] = vi
@@ -869,11 +827,9 @@ class Segtree2DPrimalCompressInt(Segtree2DPrimalCompress[int]):
     0
     """
 
-    from typing import Iterable, Callable, Tuple
-
     def __init__(
         self,
-        yxs: Iterable[Tuple[int, int]],
+        yxs: Iterable[tuple[int, int]],
         f: Callable[[int, int], int] = operator.add,
         e: int = 0,
     ):
@@ -892,7 +848,7 @@ def solve_yosupojudge_point_add_range_sum():
     A = [int(v) for v in input().split()]
     seg = SegtreePrimalInt(N)
     seg.setall(A)
-    ans = []
+    ans = list[int]()
     for _ in range(Q):
         q, *args = map(int, input().split())
         if q == 0:
@@ -914,12 +870,12 @@ def solve_yosupojudge_point_add_rectangle_sum():
     https://judge.yosupo.jp/problem/point_add_rectangle_sum
     """
     N, Q = map(int, input().split())
-    XYW = []
+    XYW = list[tuple[int, int, int]]()
     for _ in range(N):
         x, y, w = map(int, input().split())
         XYW.append((x, y, w))
     yxs = set((y, x) for x, y, w in XYW)
-    queries = []
+    queries = list[tuple[int, list[int]]]()
     for _ in range(Q):
         q, *args = map(int, input().split())
         if q == 0:
@@ -929,7 +885,7 @@ def solve_yosupojudge_point_add_rectangle_sum():
     seg = Segtree2DPrimalCompressInt(yxs)
     for x, y, w in XYW:
         seg[y, x] += w
-    ans = []
+    ans = list[int]()
     for q, args in queries:
         if q == 0:
             x, y, w = args
@@ -952,7 +908,7 @@ def solve_atcoder_practice2_j():
     A = [int(v) for v in input().split()]
     seg = SegtreePrimalInt(N, max, -(10**9))
     seg.setall(A)
-    anses = []
+    anses = list[int]()
     for _ in range(Q):
         t, *args = map(int, input().split())
         if t == 1:
@@ -975,18 +931,16 @@ def solve_atcoder_abc287_g():
     AtCoder Beginner Contest 287: G - Balance Update Query
     https://atcoder.jp/contests/abc287/tasks/abc287_g
     """
-    from typing import Tuple, List
-
     N = int(input())
-    A: List[int] = []
-    B: List[int] = []
+    A = list[int]()
+    B = list[int]()
     for _ in range(N):
         a, b = map(int, input().split())
         A.append(a)
         B.append(b)
     S = A.copy()
     Q = int(input())
-    qs: List[Tuple[int, List[int]]] = []
+    qs = list[tuple[int, list[int]]]()
     for _ in range(Q):
         p, *args = map(int, input().split())
         if p == 1:
@@ -995,7 +949,7 @@ def solve_atcoder_abc287_g():
         qs.append((p, args))
     S = sorted(set(S))
     d = {v: i for i, v in enumerate(S)}
-    V = Tuple[int, int]
+    V = tuple[int, int]
 
     def f(x: V, y: V) -> V:
         return (x[0] + y[0], x[1] + y[1])
@@ -1005,7 +959,7 @@ def solve_atcoder_abc287_g():
         ia = d[a]
         k, s = seg[ia]
         seg[ia] = (k + b, s + a * b)
-    anses: List[int] = []
+    anses = list[int]()
     for p, args in qs:
         if p == 1:
             x, y = args

@@ -1,15 +1,20 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/bit.py
 import operator
-from typing import TypeVar, Generic, Callable, Optional
+from collections.abc import Callable, Sequence
+from typing import Generic, TypeVar
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
-class BIT(Generic[T]):
+class BIT(Generic[_T]):
     """v1.3 @cexen"""
 
     def __init__(
-        self, n: int, f: Callable[[T, T], T], e: T, increasing: Optional[bool] = None
+        self,
+        n: int,
+        f: Callable[[_T, _T], _T],
+        e: _T,
+        increasing: bool | None = None,
     ):
         """
         increasing: Required at bisect.
@@ -29,7 +34,7 @@ class BIT(Generic[T]):
         """O(n)."""
         self.tree[:] = [self.e] * len(self.tree)
 
-    def grasp(self, i: Optional[int] = None) -> T:
+    def grasp(self, i: int | None = None) -> _T:
         """O(log n). reduce(f, data[:i], e)."""
         if i is None:
             i = self.size
@@ -40,20 +45,20 @@ class BIT(Generic[T]):
             i -= i & -i
         return s
 
-    def operate(self, i: int, v: T) -> None:
+    def operate(self, i: int, v: _T) -> None:
         """O(log n). bit[i] = f(bit[i], v)."""
         i += 1  # to 1-indexed
         while i <= self.size:
             self.tree[i] = self.f(self.tree[i], v)
             i += i & -i
 
-    def bisect_left(self, v: T) -> int:
+    def bisect_left(self, v: _T) -> int:
         return self._bisect_any(v, left=True)
 
-    def bisect_right(self, v: T) -> int:
+    def bisect_right(self, v: _T) -> int:
         return self._bisect_any(v, left=False)
 
-    def _bisect_any(self, v: T, left: bool = True) -> int:
+    def _bisect_any(self, v: _T, left: bool = True) -> int:
         if self.increasing is None:
             raise RuntimeError("Specify increasing.")
         incr = self.increasing  # type: ignore
@@ -130,7 +135,7 @@ class BITInt(BIT[int]):
         n: int,
         f: Callable[[int, int], int] = operator.add,
         e: int = 0,
-        increasing: Optional[bool] = None,
+        increasing: bool | None = None,
     ):
         super().__init__(n, f, e, increasing)
 
@@ -141,7 +146,7 @@ class BITFloat(BIT[float]):
         n: int,
         f: Callable[[float, float], float] = operator.add,
         e: float = 0.0,
-        increasing: Optional[bool] = None,
+        increasing: bool | None = None,
     ):
         super().__init__(n, f, e, increasing)
 
@@ -175,12 +180,9 @@ class DisjointSetUnion:
         return True
 
 
-from typing import Tuple, Sequence, List
-
-
 def find_manhattan_mst(
     xs: Sequence[int], ys: Sequence[int]
-) -> Tuple[int, List[int], List[int]]:
+) -> tuple[int, list[int], list[int]]:
     """
     v1.0 @cexen.
     Returns (dist, us, vs)
@@ -203,9 +205,9 @@ def find_manhattan_mst(
         return j
 
     bit = BITInt(n, f=f, e=-1)
-    ds0 = []
-    us0 = []
-    vs0 = []
+    ds0 = list[int]()
+    us0 = list[int]()
+    vs0 = list[int]()
     for _ in range(2):
         for sgny in (1, -1):
             dyi = {y: i for i, y in enumerate(sorted(sgny * y for y in ys))}
@@ -227,8 +229,8 @@ def find_manhattan_mst(
                         vs0.append(j)
         xs, ys = ys, xs
     dist = 0
-    us = []
-    vs = []
+    us = list[int]()
+    vs = list[int]()
     idxs = list(range(len(us0)))
     idxs.sort(key=lambda i: ds0[i])
     dsu = DisjointSetUnion(n)
@@ -254,7 +256,7 @@ def solve_yosupojudge_static_range_sum():
     """
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    LR = []
+    LR = list[tuple[int, int]]()
     for _ in range(Q):
         l, r = map(int, input().split())
         LR.append((l, r))
@@ -272,7 +274,7 @@ def solve_yosupojudge_unionfind():
     """
     N, Q = map(int, input().split())
     dst = DisjointSetUnion(N)
-    ans = []
+    ans = list[bool]()
     for _ in range(Q):
         t, u, v = map(int, input().split())
         if t == 0:
@@ -292,8 +294,8 @@ def solve_yosupojudge_manhattanmst():
     https://judge.yosupo.jp/problem/manhattanmst
     """
     N = int(input())
-    xs = []
-    ys = []
+    xs = list[int]()
+    ys = list[int]()
     for _ in range(N):
         x, y = map(int, input().split())
         xs.append(x)

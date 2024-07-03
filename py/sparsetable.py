@@ -1,20 +1,12 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/sparsetable.py
-from typing import (
-    TypeVar,
-    Callable,
-    Iterable,
-    Optional,
-    Union,
-    Sequence,
-    Tuple,
-    List,
-    overload,
-)
+from collections.abc import Callable, Iterable, Sequence
+from itertools import accumulate
+from typing import TypeVar, overload
 
-T_ = TypeVar("T_")
+_T = TypeVar("_T")
 
 
-class SparseTable(Sequence[T_]):
+class SparseTable(Sequence[_T]):
     """
     v1.1 @cexen.
     Works for associative & idenpotent f(x, y).
@@ -34,7 +26,7 @@ class SparseTable(Sequence[T_]):
     5
     """
 
-    def __init__(self, data: Iterable[T_], f: Callable[[T_, T_], T_]):
+    def __init__(self, data: Iterable[_T], f: Callable[[_T, _T], _T]):
         """
         O(n log n).
         Required: f(f(x, y), z) == f(x, f(y, z)).
@@ -53,22 +45,22 @@ class SparseTable(Sequence[T_]):
         return self.n
 
     @overload
-    def __getitem__(self, i: int) -> T_:
+    def __getitem__(self, i: int) -> _T:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[T_]:
+    def __getitem__(self, i: slice) -> list[_T]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[T_, List[T_]]:
+    def __getitem__(self, i: int | slice) -> _T | list[_T]:
         table0 = self.table[0]
         if isinstance(i, slice):
             return [table0[j] for j in range(self.n)[i]]
         return table0[i]
 
-    def grasp(self, i: int = 0, j: Optional[int] = None) -> T_:
+    def grasp(self, i: int = 0, j: int | None = None) -> _T:
         """O(1). 0 <= i < j <= n. Take care that i != j."""
         if j is None:
             j = self.n
@@ -80,10 +72,7 @@ class SparseTable(Sequence[T_]):
         return self.f(row[i], row[j - w])
 
 
-from itertools import accumulate
-
-
-class SparseTableDisjoint(Sequence[T_]):
+class SparseTableDisjoint(Sequence[_T]):
     """
     v1.1 @cexen.
     Works for associative f(x, y).
@@ -103,7 +92,7 @@ class SparseTableDisjoint(Sequence[T_]):
     5
     """
 
-    def __init__(self, data: Iterable[T_], f: Callable[[T_, T_], T_]):
+    def __init__(self, data: Iterable[_T], f: Callable[[_T, _T], _T]):
         """
         O(n log n).
         Required: f(f(x, y), z) == f(x, f(y, z)).
@@ -114,7 +103,7 @@ class SparseTableDisjoint(Sequence[T_]):
         self.f = f
         for b in range(1, self.n.bit_length()):
             w = 1 << b
-            row: List[T_] = []
+            row = list[_T]()
             for i in range(w, self.n, w << 1):
                 seg = accumulate((row0[i - 1 - j] for j in range(w)), f)
                 row.extend(reversed(list(seg)))
@@ -126,22 +115,22 @@ class SparseTableDisjoint(Sequence[T_]):
         return self.n
 
     @overload
-    def __getitem__(self, i: int) -> T_:
+    def __getitem__(self, i: int) -> _T:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[T_]:
+    def __getitem__(self, i: slice) -> list[_T]:
         """O(len(i))."""
         ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[T_, List[T_]]:
+    def __getitem__(self, i: int | slice) -> _T | list[_T]:
         table0 = self.table[0]
         if isinstance(i, slice):
             return [table0[j] for j in range(self.n)[i]]
         return table0[i]
 
-    def grasp(self, i: int = 0, j: Optional[int] = None) -> T_:
+    def grasp(self, i: int = 0, j: int | None = None) -> _T:
         """O(1). 0 <= i < j <= n. Take care that i != j."""
         if j is None:
             j = self.n
@@ -155,7 +144,7 @@ class SparseTableDisjoint(Sequence[T_]):
         return self.f(row[i], row[j])
 
 
-class SparseTable2D(Sequence[Sequence[T_]]):
+class SparseTable2D(Sequence[Sequence[_T]]):
     """
     v1.1 @cexen.
     Works for associative & idenpotent f(x, y).
@@ -177,7 +166,7 @@ class SparseTable2D(Sequence[Sequence[T_]]):
     3
     """
 
-    def __init__(self, data: Iterable[Iterable[T_]], f: Callable[[T_, T_], T_]):
+    def __init__(self, data: Iterable[Iterable[_T]], f: Callable[[_T, _T], _T]):
         """
         O(hw log hw).
         Required: f(f(x, y), z) == f(x, f(y, z)).
@@ -218,32 +207,32 @@ class SparseTable2D(Sequence[Sequence[T_]]):
         return self.h * self.w
 
     @overload
-    def __getitem__(self, s: Tuple[int, int]) -> T_:
+    def __getitem__(self, s: tuple[int, int]) -> _T:
         """O(1)."""
         ...
 
     @overload
-    def __getitem__(self, s: int) -> List[T_]:
+    def __getitem__(self, s: int) -> list[_T]:
         """O(w)."""
         ...
 
     @overload
-    def __getitem__(self, s: Tuple[int, slice]) -> List[T_]:
+    def __getitem__(self, s: tuple[int, slice]) -> list[_T]:
         """O(len(j))."""
         ...
 
     @overload
-    def __getitem__(self, s: Tuple[slice, int]) -> List[T_]:
+    def __getitem__(self, s: tuple[slice, int]) -> list[_T]:
         """O(len(i))."""
         ...
 
     @overload
-    def __getitem__(self, s: slice) -> List[List[T_]]:
+    def __getitem__(self, s: slice) -> list[list[_T]]:
         """O(len(i) * w)."""
         ...
 
     @overload
-    def __getitem__(self, s: Tuple[slice, slice]) -> List[List[T_]]:
+    def __getitem__(self, s: tuple[slice, slice]) -> list[list[_T]]:
         """O(len(i) * len(j))."""
         ...
 
@@ -260,10 +249,10 @@ class SparseTable2D(Sequence[Sequence[T_]]):
     def grasp(
         self,
         il: int = 0,
-        ir: Optional[int] = None,
+        ir: int | None = None,
         jl: int = 0,
-        jr: Optional[int] = None,
-    ) -> T_:
+        jr: int | None = None,
+    ) -> _T:
         """O(1). 0 <= i < j <= n. Take care that i != j."""
         if ir is None:
             ir = self.h
@@ -294,7 +283,7 @@ def solve_yosupojudge_staticrmq():
     """
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    LR = []
+    LR = list[tuple[int, int]]()
     for _ in range(Q):
         l, r = map(int, input().split())
         LR.append((l, r))
@@ -311,7 +300,7 @@ def solve_yosupojudge_staticrmq_disjoint():
     """
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    LR = []
+    LR = list[tuple[int, int]]()
     for _ in range(Q):
         l, r = map(int, input().split())
         LR.append((l, r))
@@ -330,7 +319,7 @@ def solve_yosupojudge_static_range_sum():
 
     N, Q = map(int, input().split())
     A = [int(v) for v in input().split()]
-    LR = []
+    LR = list[tuple[int, int]]()
     for _ in range(Q):
         l, r = map(int, input().split())
         LR.append((l, r))

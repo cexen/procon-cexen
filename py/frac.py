@@ -48,3 +48,6 @@ class Frac(Number):
 
     def __lt__(self, w: object) -> bool:
         return isinstance(w, self.__class__) and self.n * w.m - self.m * w.n < 0
+
+
+# --------------------

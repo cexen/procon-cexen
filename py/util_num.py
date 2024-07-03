@@ -563,7 +563,7 @@ def solve_yosupojudge_discrete_logarithm_mod():
     https://judge.yosupo.jp/problem/discrete_logarithm_mod
     """
     T = int(input())
-    anses = []
+    anses = list[int]()
     for _ in range(T):
         x, y, m = map(int, input().split())
         ans = discrete_log(x, y, m, m_is_prime=False)

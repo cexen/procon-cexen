@@ -1,11 +1,12 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/swag.py
+from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
-from typing import overload, TypeVar, Callable, Iterable, Sequence, Union, List
+from typing import TypeVar, overload
 
-T_ = TypeVar("T_")
+_T = TypeVar("_T")
 
 
-class AggregatedQueue(Sequence[T_]):
+class AggregatedQueue(Sequence[_T]):
     """
     v1.0 @cexen.
     Sliding Window Aggregation.
@@ -17,9 +18,9 @@ class AggregatedQueue(Sequence[T_]):
 
     def __init__(
         self,
-        f: Callable[[T_, T_], T_],
-        e: T_,
-        iterable: Iterable[T_] = [],
+        f: Callable[[_T, _T], _T],
+        e: _T,
+        iterable: Iterable[_T] = [],
     ):
         """
         O(len(iterable)).
@@ -28,24 +29,24 @@ class AggregatedQueue(Sequence[T_]):
         """
         self.f = f
         self.e = e
-        self.qleft: List[T_] = []
+        self.qleft = list[_T]()
         self.qright = list(iterable)
-        self.aleft: List[T_] = []
-        self.aright: T_ = reduce(f, self.qright, e)
+        self.aleft = list[_T]()
+        self.aright: _T = reduce(f, self.qright, e)
 
     @property
-    def value(self) -> T_:
+    def value(self) -> _T:
         """O(1). Returns reduce(q, f, e)."""
         if not self.aleft:
             return self.aright
         return self.f(self.aleft[-1], self.aright)
 
-    def append(self, value: T_) -> None:
+    def append(self, value: _T) -> None:
         """O(1)."""
         self.qright.append(value)
         self.aright = self.f(self.aright, value)
 
-    def popleft(self) -> T_:
+    def popleft(self) -> _T:
         """O(1) amortized."""
         if not self.qleft and not self.qright:
             return self.e
@@ -73,14 +74,14 @@ class AggregatedQueue(Sequence[T_]):
         return len(self.qleft) + len(self.qright)
 
     @overload
-    def __getitem__(self, index: int) -> T_:
+    def __getitem__(self, index: int) -> _T:
         """O(1)."""
 
     @overload
-    def __getitem__(self, index: slice) -> List[T_]:
+    def __getitem__(self, index: slice) -> list[_T]:
         """O(len(i))."""
 
-    def __getitem__(self, index: Union[int, slice]) -> Union[T_, List[T_]]:
+    def __getitem__(self, index: int | slice) -> _T | list[_T]:
         i = range(len(self))[index]
         if isinstance(i, range):
             return [self[ii] for ii in i]
@@ -131,3 +132,6 @@ class AggregatedQueueInt(AggregatedQueue[int]):
         iterable: Iterable[int] = [],
     ):
         super().__init__(f, e, iterable)
+
+
+# --------------------

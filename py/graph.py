@@ -1,62 +1,50 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/graph.py
-from typing import TypeVar, Generic, Sequence
+from abc import abstractmethod
+from collections import deque
+from collections.abc import Sequence
+from typing import Generic, Protocol, TypeVar, overload, runtime_checkable
+
+C_ = TypeVar("C_", bound="Cost")
 
 
-C_ = TypeVar("C_")
+@runtime_checkable
+class Cost(Protocol):
+    @abstractmethod
+    def __add__(self: C_, value: C_, /) -> C_: ...
 
-# >= 3.8
+    @abstractmethod
+    def __sub__(self: C_, value: C_, /) -> C_: ...
 
-# C_ = TypeVar("C_", bound="Cost")
-
-# from typing import Protocol, runtime_checkable
-# from abc import abstractmethod
-# @runtime_checkable
-# class Cost(Protocol):
-#     @abstractmethod
-#     def __add__(self: C_, other: C_) -> C_:
-#         ...
-
-#     @abstractmethod
-#     def __sub__(self: C_, other: C_) -> C_:
-#         ...
-
-#     @abstractmethod
-#     def __lt__(self: C_, other: C_) -> bool:
-#         ...
+    @abstractmethod
+    def __lt__(self: C_, value: C_, /) -> bool: ...
 
 
 class Graph(Generic[C_], Sequence[int]):
     """v1.14 @cexen"""
 
-    from typing import Union, Tuple, List, FrozenSet, overload
-
     def __init__(self, n: int, _0: C_):
-        from typing import List, Tuple, FrozenSet, Optional
-
         self._n = n
         self._0 = _0  # will be used for initial cost values
-        self._adjs: List[List[Tuple[int, C_, int]]] = [[] for _ in range(n)]
-        self._revs: List[List[Tuple[int, C_, int]]] = [[] for _ in range(n)]
+        self._adjs = [list[tuple[int, C_, int]]() for _ in range(n)]
+        self._revs = [list[tuple[int, C_, int]]() for _ in range(n)]
         self._idxs = list(range(n))
         self._is_sorted = True
-        self._sccs: Optional[List[FrozenSet[int]]] = None
-        self._locs_in_sccs: Optional[List[int]] = None
+        self._sccs: list[frozenset[int]] | None = None
+        self._locs_in_sccs: list[int] | None = None
 
     def __len__(self) -> int:
         return self._n
 
     @overload
-    def __getitem__(self, i: int) -> int:
-        ...
+    def __getitem__(self, i: int) -> int: ...
 
     @overload
-    def __getitem__(self, i: slice) -> List[int]:
-        ...
+    def __getitem__(self, i: slice) -> list[int]: ...
 
-    def __getitem__(self, i: Union[int, slice]) -> Union[int, List[int]]:
+    def __getitem__(self, i: int | slice) -> int | list[int]:
         return self._idxs[i]
 
-    def _require_nonempty(self):
+    def _require_nonempty(self) -> None:
         if not self._n > 0:
             raise RuntimeError("n must be > 0.")
 
@@ -81,15 +69,13 @@ class Graph(Generic[C_], Sequence[int]):
         If not sorted, sorts.
         Sort nodes topologically.
         """
-        from typing import List
-
-        idxs: List[int] = []
+        idxs = list[int]()
         visited = [False] * self._n
         # reversing just for aesthetic goodness of orders
         for istart in reversed(range(self._n)):
             if visited[istart]:
                 continue
-            q: List[int] = []
+            q = list[int]()
             q.append(istart)
             # postorder
             while q:
@@ -112,29 +98,27 @@ class Graph(Generic[C_], Sequence[int]):
     def find_sccs(
         self,
         require_sccadjs: bool = False,
-    ) -> Tuple[
-        List[FrozenSet[int]],
-        List[List[Tuple[int, int]]],
-        List[List[Tuple[int, int]]],
+    ) -> tuple[
+        list[frozenset[int]],
+        list[list[tuple[int, int]]],
+        list[list[tuple[int, int]]],
     ]:
         """
         O(n + m). m: num of connections.
         Return: A topologically sorted list of SCCs.
         """
-        from typing import Tuple, List, FrozenSet
-
         if not self._is_sorted:
             self.sort()
 
-        sccs: List[FrozenSet[int]] = []
+        sccs = list[frozenset[int]]()
         locs_in_sccs = [-1] * self._n
-        sccadjs: List[List[Tuple[int, int]]] = [[] for _ in range(self._n)]
-        sccrevs: List[List[Tuple[int, int]]] = [[] for _ in range(self._n)]
+        sccadjs = [list[tuple[int, int]]() for _ in range(self._n)]
+        sccrevs = [list[tuple[int, int]]() for _ in range(self._n)]
         for idx in self._idxs:
             if locs_in_sccs[idx] != -1:
                 continue
-            scc: List[int] = []
-            q: List[int] = []
+            scc = list[int]()
+            q = list[int]()
             si = len(sccs)
             locs_in_sccs[idx] = si
             q.append(idx)
@@ -205,21 +189,17 @@ class GraphInt(Graph[int]):
 class Tree(Graph[C_]):
     """v1.5 @cexen"""
 
-    from typing import Optional, List, Tuple
-
-    def __init__(self, n: int, _0: C_, root: Optional[int] = None):
-        from typing import Optional, List
-
+    def __init__(self, n: int, _0: C_, root: int | None = None):
         super().__init__(n, _0)
 
         if root is not None and not 0 <= root < n:
             raise ValueError
         self._root = root
-        self._maxdepth: Optional[int] = None
-        self._depths: Optional[List[int]] = None
-        self._weighted_depths: Optional[List[C_]] = None
-        self._parents: Optional[List[List[int]]] = None
-        self._bitlen_maxdepth: Optional[int] = None
+        self._maxdepth: int | None = None
+        self._depths: list[int] | None = None
+        self._weighted_depths: list[C_] | None = None
+        self._parents: list[list[int]] | None = None
+        self._bitlen_maxdepth: int | None = None
 
     def find_root(self) -> None:
         """O(n). If directional and not sorted, sorts."""
@@ -232,15 +212,12 @@ class Tree(Graph[C_]):
         self._root = self._idxs[0]
 
     def locate_all_from_root(
-        self, root: Optional[int] = None, save: bool = True
-    ) -> Tuple[int, List[int], List[C_], List[List[int]]]:
+        self, root: int | None = None, save: bool = True
+    ) -> tuple[int, list[int], list[C_], list[list[int]]]:
         """
         O(n). Prerequisite: none.
         Returns: (maxdepth, depths, weighted_depths, parents).
         """
-        from collections import deque
-        from typing import Deque, Tuple
-
         self._require_nonempty()
         if root is None:
             if self._root is None:
@@ -252,9 +229,9 @@ class Tree(Graph[C_]):
         depths = [-1] * self._n
         weighted_depths = [self._0] * self._n
         parents = [[-1] * self._n]  # [k of 2^k][i]
-        q: Deque[Tuple[int, int, C_, int]] = deque()
-        q.append((root, 0, self._0, -1))
-        while len(q):
+        q = deque[tuple[int, int, C_, int]]([(root, 0, self._0, -1)])
+        d = 0
+        while q:
             i, d, wd, parent = q.popleft()  # BFS
             depths[i] = d
             weighted_depths[i] = wd
@@ -262,8 +239,8 @@ class Tree(Graph[C_]):
             for j, c, _ in self._adjs[i]:
                 if parent == j:
                     continue
-                q.append((j, d + 1, wd + c, i))  # type: ignore
-        maxdepth = d  # type: ignore
+                q.append((j, d + 1, wd + c, i))
+        maxdepth = d
         if save:
             self._root = root
             self._maxdepth = maxdepth
@@ -313,24 +290,24 @@ class Tree(Graph[C_]):
         assert self._weighted_depths is not None, "Prerequisite: locate_all_from_root()"
         lca = self.find_lca(u, v)
         return (
-            self._weighted_depths[u]  # type: ignore
+            self._weighted_depths[u]
             + self._weighted_depths[v]
             - self._weighted_depths[lca]
             - self._weighted_depths[lca]
         )
 
-    def find_diameter(self, root: int = 0, save: bool = True) -> Tuple[C_, int, int]:
+    def find_diameter(self, root: int = 0, save: bool = True) -> tuple[C_, int, int]:
         """
         MUST BE BIDIRECTIONAL. DOES NOT ACCOUNT FOR COSTS.
         Prerequisite: none
         """
         _, _, weighted_depths, _ = self.locate_all_from_root(root, save)
-        maxwd = max(weighted_depths)  # type: ignore
-        one_end = weighted_depths.index(maxwd)  # type: ignore
+        maxwd = max(weighted_depths)
+        one_end = weighted_depths.index(maxwd)
         _, _, weighted_depths, _ = self.locate_all_from_root(one_end, save=False)
-        diameter = max(weighted_depths)  # type: ignore
-        other_end = weighted_depths.index(diameter)  # type: ignore
-        return diameter, one_end, other_end  # type: ignore
+        diameter = max(weighted_depths)
+        other_end = weighted_depths.index(diameter)
+        return diameter, one_end, other_end
 
 
 class TreeInt(Tree[int]):
@@ -353,9 +330,7 @@ class TreeInt(Tree[int]):
     (3, 3, 1)
     """
 
-    from typing import Optional
-
-    def __init__(self, n: int, root: Optional[int] = None):
+    def __init__(self, n: int, root: int | None = None):
         super().__init__(n, _0=0, root=root)
 
     def connect(self, i: int, j: int, cost: int = 1, edgeidx: int = -1) -> None:

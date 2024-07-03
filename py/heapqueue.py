@@ -1,6 +1,7 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/heapqueue.py
 import heapq
-from typing import Generic, Iterable, List, TypeVar
+from collections.abc import Iterable
+from typing import Generic, TypeVar
 
 # >= 3.8
 
@@ -54,7 +55,7 @@ class HeapQueue(Generic[K_]):
     """
 
     def __init__(self, iterable: Iterable[K_] = []):
-        self.heap: List[K_] = list(iterable)
+        self.heap = list(iterable)
         heapq.heapify(self.heap)
 
     def __len__(self) -> int:
@@ -95,9 +96,9 @@ class HeapQueueDiscardable(Generic[K_]):
     """
 
     def __init__(self, iterable: Iterable[K_] = []):
-        self.heap: List[K_] = list(iterable)
+        self.heap = list(iterable)
         heapq.heapify(self.heap)
-        self.disc: List[K_] = []
+        self.disc = list[K_]()
 
     def __len__(self) -> int:
         return len(self.heap)

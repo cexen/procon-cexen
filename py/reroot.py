@@ -1,5 +1,6 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/tree.py
-from typing import Callable, TypeAlias, TypeVar
+from collections.abc import Callable
+from typing import TypeAlias, TypeVar
 
 E_ = TypeVar("E_")
 V_ = TypeVar("V_")
@@ -15,7 +16,7 @@ class TreeReroot:
         self.n = n
         self.root = -1
         self.idxs = [-1] * n
-        self.adjs: list[list[tuple[int, int]]] = [[] for _ in range(n)]
+        self.adjs = [list[tuple[int, int]]() for _ in range(n)]
         self.parents: list[tuple[int, int]] = [(-1, -1)] * n
 
     def connect(self, u: int, v: int, e: int = -1) -> None:
@@ -58,7 +59,7 @@ class TreeReroot:
     ) -> tuple[list[V_], list[list[E_ | None]]]:
         self.sort(root)
         ans0: list[V_] = [None] * self.n  # type: ignore
-        edgeses: list[list[E_ | None]] = [[] for _ in range(self.n)]
+        edgeses = [list[E_ | None]() for _ in range(self.n)]
         for i in reversed(self.idxs):
             parent = self.parents[i]
             edges = edgeses[i]
@@ -166,10 +167,8 @@ def solve_abc220_f():
         u, v = map(int, input().split())
         tree.connect(u - 1, v - 1)
 
-    from typing import Tuple
-
-    E = Tuple[int, int]
-    V = Tuple[int, int]
+    E = tuple[int, int]
+    V = tuple[int, int]
 
     def add_e(v: V, i: int, e: int) -> E:
         n, d = v

@@ -1,5 +1,5 @@
 # https://github.com/cexen/procon-cexen/blob/main/py/maxbimatch.py
-from typing import Tuple, Deque, List
+from collections import deque
 
 
 class MaxBiMatch:
@@ -14,8 +14,8 @@ class MaxBiMatch:
     def __init__(self, m: int, n: int):
         self.m = m
         self.n = n
-        self.adjs: List[List[int]] = [[] for _ in range(m)]
-        self.revs: List[List[int]] = [[] for _ in range(n)]
+        self.adjs = [list[int]() for _ in range(m)]
+        self.revs = [list[int]() for _ in range(n)]
 
     def connect(self, i: int, j: int) -> None:
         """O(1)."""
@@ -24,7 +24,7 @@ class MaxBiMatch:
         self.adjs[i].append(j)
         self.revs[j].append(i)
 
-    def solve(self) -> Tuple[int, List[int], List[int]]:
+    def solve(self) -> tuple[int, list[int], list[int]]:
         """Not sure but O((m+n)sqrt(v)) where v = sum(len(adj)) ?"""
         num_pairs = 0
         pair_of_l = [-1] * self.m
@@ -34,7 +34,7 @@ class MaxBiMatch:
             will_continue = 0
             roots = [-1] * self.m
             prevs = [-1] * self.m
-            q = Deque[int]()
+            q = deque[int]()
             for i in range(self.m):
                 if pair_of_l[i] == -1:
                     roots[i] = i
@@ -61,15 +61,15 @@ class MaxBiMatch:
         return num_pairs, pair_of_l, pair_of_r
 
     def find_min_vertex_cover(
-        self, pair_of_l: List[int], pair_of_r: List[int]
-    ) -> Tuple[List[int], List[int]]:
+        self, pair_of_l: list[int], pair_of_r: list[int]
+    ) -> tuple[list[int], list[int]]:
         """
         O(m+n+v) where v = sum(len(adj)).
         cf. https://qiita.com/drken/items/7f98315b56c95a6181a4
         """
         visited_l = [0] * self.m
         visited_r = [0] * self.n
-        q: List[int] = []
+        q = list[int]()
         for i in range(self.m):
             if pair_of_l[i] == -1:
                 q.append(i)
@@ -93,8 +93,8 @@ class MaxBiMatch:
         return ls, rs
 
     def find_max_independent_set(
-        self, pair_of_l: List[int], pair_of_r: List[int]
-    ) -> Tuple[List[int], List[int]]:
+        self, pair_of_l: list[int], pair_of_r: list[int]
+    ) -> tuple[list[int], list[int]]:
         """
         O(m+n+v) where v = sum(len(adj)).
         Returns complement set of find_min_vertex_cover().
@@ -112,13 +112,13 @@ class MaxBiMatch:
         return ls, rs
 
     def find_min_edge_cover(
-        self, pair_of_l: List[int], pair_of_r: List[int]
-    ) -> List[Tuple[int, int]]:
+        self, pair_of_l: list[int], pair_of_r: list[int]
+    ) -> list[tuple[int, int]]:
         """
         O(m+n).
         cf. https://qiita.com/drken/items/7f98315b56c95a6181a4
         """
-        edges: List[Tuple[int, int]] = []
+        edges = list[tuple[int, int]]()
         for i, j in enumerate(pair_of_l):
             if not self.adjs[i]:
                 continue
@@ -160,8 +160,8 @@ def solve_typical90_by():
     https://atcoder.jp/contests/typical90/tasks/typical90_by
     """
     N, T = map(int, input().split())
-    A: List[Tuple[int, int]] = []
-    B: List[Tuple[int, int]] = []
+    A = list[tuple[int, int]]()
+    B = list[tuple[int, int]]()
     for _ in range(N):
         x, y = map(int, input().split())
         A.append((x, y))
